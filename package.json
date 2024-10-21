@@ -19,7 +19,7 @@
 	"scripts": {
 		"build": "tsc -p tsconfig.json",
 		"lint": "prettier --write . && yarn tsc",
-		"npm-publish": "./.test.sh --run && yarn build && yarn version --patch --no-git-tag-version && yarn publish --non-interactive",
+		"npm-publish": "yarn test --run && yarn build && yarn version --patch --no-git-tag-version && yarn publish --non-interactive",
 		"test": "vitest"
 	}
 }

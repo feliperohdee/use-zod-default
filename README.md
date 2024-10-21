@@ -120,3 +120,7 @@ Contributions, issues, and feature requests are welcome! Feel free to check [iss
 ## 📄 License
 
 This project is [MIT](https://opensource.org/licenses/MIT) licensed.
+
+---
+
+Made with ❤️ by Simple Img

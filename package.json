@@ -1,5 +1,5 @@
 {
-	"name": "@simpleimg/zod-default-instance",
+	"name": "zod-default-instance",
 	"version": "1.0.1",
 	"main": "dist/index.js",
 	"license": "MIT",

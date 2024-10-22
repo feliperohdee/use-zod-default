@@ -112,11 +112,3 @@ const dataSchema = z.union([
 const defaultData = defaultInstance(dataSchema);
 console.log(defaultData); // { type: 'string', value: '' }
 ```
-
-## 📄 License
-
-This project is [MIT](https://opensource.org/licenses/MIT) licensed.
-
----
-
-Made with ❤️ by Simple Img

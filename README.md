@@ -113,10 +113,6 @@ const defaultData = defaultInstance(dataSchema);
 console.log(defaultData); // { type: 'string', value: '' }
 ```
 
-## 🤝 Contributing
-
-Contributions, issues, and feature requests are welcome! Feel free to check [issues page](https://github.com/yourusername/zod-default-instance/issues).
-
 ## 📄 License
 
 This project is [MIT](https://opensource.org/licenses/MIT) licensed.

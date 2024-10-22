@@ -1,14 +1,18 @@
 {
 	"name": "zod-default-instance",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"main": "dist/index.js",
 	"license": "MIT",
-	"dependencies": {
-		"zod": "^3.23.8"
-	},
 	"files": [
 		"dist"
 	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/feliperohdee/zod-default-instance"
+	},
+	"dependencies": {
+		"zod": "^3.23.8"
+	},
 	"devDependencies": {
 		"@types/lodash": "^4.17.12",
 		"@types/node": "^22.7.7",

@@ -112,8 +112,12 @@ const defaultInstance = <T extends z.ZodTypeAny>(
 			return processDiscriminatedUnion(schema, value);
 		} else if (schema instanceof z.ZodUnion) {
 			return processUnion(schema, value);
+		} else if (schema instanceof z.ZodBoolean) {
+			return typeof value === 'boolean' ? value : false;
 		} else if (schema instanceof z.ZodNumber) {
-			return typeof value === 'number' ? value : schema.minValue ?? 0;
+			return typeof value === 'number' ? value : (schema.minValue ?? 0);
+		} else if (schema instanceof z.ZodString) {
+			return typeof value === 'string' ? value : '';
 		} else {
 			return value;
 		}

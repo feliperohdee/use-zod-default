@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { z } from 'zod';
+import { boolean, z } from 'zod';
 
 import defaultInstance from './index';
 
@@ -275,12 +275,6 @@ describe('defaultInstance', () => {
 
 		it('should handle all types', () => {
 			const schema = z.object({
-				string: z.string(),
-				number: z.number(),
-				numberUndefined: z.number(),
-				boolean: z.boolean(),
-				date: z.date(),
-				enum: z.enum(['A', 'B', 'C']),
 				array: z.array(z.string()),
 				arrayObject: z.array(
 					z.object({
@@ -288,46 +282,72 @@ describe('defaultInstance', () => {
 						b: z.string()
 					})
 				),
-				object: z.object({ key: z.string() }),
-				optional: z.string().optional(),
+				boolean: z.boolean(),
+				booleanUndefined: z.boolean(),
+				date: z.date(),
+				default: z.string().default('default'),
+				enum: z.enum(['A', 'B', 'C']),
 				nullable: z.string().nullable(),
-				default: z.string().default('default')
+				number: z.number(),
+				numberUndefined: z.number(),
+				object: z.object({
+					key: z.string()
+				}),
+				optional: z.string().optional(),
+				string: z.string(),
+				stringUndefined: z.string()
 			});
 
 			const source = {
-				string: 'source string',
+				array: ['source'],
+				arrayObject: [
+					{
+						a: 'a',
+						forbidden: 'forbidden'
+					}
+				],
+				boolean: true,
+				booleanUndefined: undefined,
+				date: new Date('2023-01-01'),
+				default: 'overridden',
+				enum: 'B',
+				forbidden: 'forbidden',
+				nullable: null,
 				number: 42,
 				numberUndefined: undefined,
-				boolean: true,
-				date: new Date('2023-01-01'),
-				forbidden: 'forbidden',
-				enum: 'B',
-				array: ['source'],
-				arrayObject: [{ a: 'a', forbidden: 'forbidden' }],
 				object: {
 					forbidden: 'forbidden',
 					key: 'source key'
 				},
 				optional: 'provided',
-				nullable: null,
-				default: 'overridden'
+				string: 'source string',
+				stringUndefined: undefined
 			};
 
 			const result = defaultInstance(schema, source);
 
 			expect(result).toEqual({
-				string: 'source string',
+				array: ['source'],
+				arrayObject: [
+					{
+						a: 'a',
+						b: ''
+					}
+				],
+				boolean: true,
+				booleanUndefined: false,
+				date: new Date('2023-01-01'),
+				default: 'overridden',
+				enum: 'B',
+				nullable: null,
 				number: 42,
 				numberUndefined: 0,
-				boolean: true,
-				date: new Date('2023-01-01'),
-				enum: 'B',
-				array: ['source'],
-				arrayObject: [{ a: 'a', b: '' }],
-				object: { key: 'source key' },
+				object: {
+					key: 'source key'
+				},
 				optional: 'provided',
-				nullable: null,
-				default: 'overridden'
+				string: 'source string',
+				stringUndefined: ''
 			});
 		});
 

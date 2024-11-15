@@ -31,14 +31,14 @@ import defaultInstance from 'zod-default-instance';
 
 // Define your Zod schema
 const userSchema = z.object({
-  name: z.string(),
-  age: z.number(),
-  isActive: z.boolean(),
-  roles: z.array(z.string()),
-  settings: z.object({
-    theme: z.enum(['light', 'dark']),
-    notifications: z.boolean()
-  })
+	name: z.string(),
+	age: z.number(),
+	isActive: z.boolean(),
+	roles: z.array(z.string()),
+	settings: z.object({
+		theme: z.enum(['light', 'dark']),
+		notifications: z.boolean()
+	})
 });
 
 // Create a default instance
@@ -64,10 +64,10 @@ You can provide a partial source object to override default values:
 
 ```typescript
 const partialUser = {
-  name: 'John Doe',
-  settings: {
-    theme: 'dark'
-  }
+	name: 'John Doe',
+	settings: {
+		theme: 'dark'
+	}
 };
 
 const userWithCustomValues = defaultInstance(userSchema, partialUser);
@@ -92,8 +92,8 @@ console.log(userWithCustomValues);
 
 ```typescript
 const resultSchema = z.discriminatedUnion('status', [
-  z.object({ status: z.literal('success'), data: z.string() }),
-  z.object({ status: z.literal('error'), message: z.string() })
+	z.object({ status: z.literal('success'), data: z.string() }),
+	z.object({ status: z.literal('error'), message: z.string() })
 ]);
 
 const defaultResult = defaultInstance(resultSchema);
@@ -104,9 +104,9 @@ console.log(defaultResult); // { status: 'success', data: '' }
 
 ```typescript
 const dataSchema = z.union([
-  z.object({ type: z.literal('string'), value: z.string() }),
-  z.object({ type: z.literal('number'), value: z.number() }),
-  z.string()
+	z.object({ type: z.literal('string'), value: z.string() }),
+	z.object({ type: z.literal('number'), value: z.number() }),
+	z.string()
 ]);
 
 const defaultData = defaultInstance(dataSchema);

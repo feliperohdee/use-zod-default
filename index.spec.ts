@@ -277,6 +277,7 @@ describe('defaultInstance', () => {
 			const schema = z.object({
 				string: z.string(),
 				number: z.number(),
+				numberUndefined: z.number(),
 				boolean: z.boolean(),
 				date: z.date(),
 				enum: z.enum(['A', 'B', 'C']),
@@ -296,6 +297,7 @@ describe('defaultInstance', () => {
 			const source = {
 				string: 'source string',
 				number: 42,
+				numberUndefined: undefined,
 				boolean: true,
 				date: new Date('2023-01-01'),
 				forbidden: 'forbidden',
@@ -316,6 +318,7 @@ describe('defaultInstance', () => {
 			expect(result).toEqual({
 				string: 'source string',
 				number: 42,
+				numberUndefined: 0,
 				boolean: true,
 				date: new Date('2023-01-01'),
 				enum: 'B',

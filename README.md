@@ -112,3 +112,15 @@ const dataSchema = z.union([
 const defaultData = defaultInstance(dataSchema);
 console.log(defaultData); // { type: 'string', value: '' }
 ```
+
+## 📝 License
+
+MIT © [Felipe Rohde](mailto:feliperohdee@gmail.com)
+
+## 👨‍💻 Author
+
+**Felipe Rohde**
+
+- Twitter: [@felipe_rohde](https://twitter.com/felipe_rohde)
+- Github: [@feliperohdee](https://github.com/feliperohdee)
+- Email: feliperohdee@gmail.com

@@ -1,13 +1,6 @@
 import { z } from 'zod';
 
-const defaultInstance = <T extends z.ZodTypeAny>(
-	schema:
-		| z.AnyZodObject
-		| z.ZodDiscriminatedUnion<string, z.ZodObject<any>[]>
-		| z.ZodEffects<any>
-		| z.ZodUnion<[z.ZodTypeAny, ...z.ZodTypeAny[]]>,
-	source: Partial<z.infer<T>> = {}
-): z.infer<T> => {
+const defaultInstance = <T extends z.ZodSchema>(schema: T, source: any = {}): z.output<T> => {
 	const getDefaultValue = (schema: z.ZodTypeAny): any => {
 		if (schema instanceof z.ZodDefault) {
 			return schema._def.defaultValue();

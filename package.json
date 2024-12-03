@@ -1,15 +1,4 @@
 {
-	"name": "zod-default-instance",
-	"version": "1.0.7",
-	"main": "dist/index.js",
-	"license": "MIT",
-	"files": [
-		"dist"
-	],
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/feliperohdee/zod-default-instance"
-	},
 	"dependencies": {
 		"zod": "^3.23.8"
 	},
@@ -20,10 +9,21 @@
 		"typescript": "^5.6.3",
 		"vitest": "^2.1.3"
 	},
+	"files": [
+		"dist"
+	],
+	"license": "MIT",
+	"main": "dist/index.js",
+	"name": "zod-default-instance",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/feliperohdee/zod-default-instance"
+	},
 	"scripts": {
 		"build": "tsc -p tsconfig.json",
 		"lint": "prettier --write . && yarn tsc",
 		"npm-publish": "yarn test --run && yarn build && yarn version --patch --no-git-tag-version && yarn publish --non-interactive",
 		"test": "vitest"
-	}
+	},
+	"version": "1.0.7"
 }

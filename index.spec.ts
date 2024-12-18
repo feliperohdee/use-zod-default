@@ -13,22 +13,22 @@ describe('defaultInstance', () => {
 
 	it('should handle with basic types', () => {
 		const schema = z.object({
-            boolean: z.boolean(),
-            date: z.date(),
-            number: z.number(),
-            record: z.record(z.string()),
-            string: z.string()
-        });
+			boolean: z.boolean(),
+			date: z.date(),
+			number: z.number(),
+			record: z.record(z.string()),
+			string: z.string()
+		});
 
 		const result = defaultInstance(schema);
 
 		expect(result).toEqual({
-            boolean: false,
-            date: null,
-            number: 0,
-            record: {},
-            string: ''
-        });
+			boolean: false,
+			date: null,
+			number: 0,
+			record: {},
+			string: ''
+		});
 	});
 
 	it('should handle with nested objects', () => {
@@ -75,6 +75,38 @@ describe('defaultInstance', () => {
 		expect(result).toEqual({
 			name: 'John',
 			age: 30
+		});
+	});
+
+	it('should handle nullable types', () => {
+		const schema = z.object({
+			nullableString: z.string().nullable(),
+			nullableNumber: z.number().nullable()
+		});
+
+		const result = defaultInstance(schema);
+
+		expect(result).toEqual({
+			nullableString: null,
+			nullableNumber: null
+		});
+	});
+
+	it('should handle unknown types', () => {
+		const schema = z.object({
+			unknownNullableType: z.unknown().nullable(),
+			unknownOptionalType: z.unknown().optional(),
+			unknownType: z.unknown(),
+			unknwonWithDefault: z.unknown().default('default')
+		});
+
+		const result = defaultInstance(schema);
+
+		expect(result).toEqual({
+			unknownNullableType: null,
+			unknownOptionalType: undefined,
+			unknownType: undefined,
+			unknwonWithDefault: 'default'
 		});
 	});
 
@@ -161,7 +193,7 @@ describe('defaultInstance', () => {
 			expect(result.createdAt).toBeNull();
 		});
 	});
-	
+
 	describe('record', () => {
 		it('should handle record', () => {
 			const schema = z.object({
@@ -173,9 +205,9 @@ describe('defaultInstance', () => {
 					key2: 'value2'
 				}
 			};
-	
+
 			const result = defaultInstance(schema, source);
-	
+
 			expect(result).toEqual({
 				dictionary: {
 					key1: 'value1',

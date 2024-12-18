@@ -66,6 +66,10 @@ const defaultInstance = <T extends z.ZodSchema>(schema: T, source: any = {}): z.
 			return {};
 		}
 
+		if (schema instanceof z.ZodNullable) {
+			return null;
+		}
+
 		if (schema._def && schema._def.innerType) {
 			return getDefaultValue(schema._def.innerType);
 		}
@@ -121,6 +125,8 @@ const defaultInstance = <T extends z.ZodSchema>(schema: T, source: any = {}): z.
 			return processRecord(schema, value);
 		} else if (schema instanceof z.ZodString) {
 			return typeof value === 'string' ? value : '';
+		} else if (schema instanceof z.ZodNullable) {
+			return value === null ? null : processValue(schema.unwrap(), value);
 		} else {
 			return value;
 		}

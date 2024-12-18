@@ -1,13 +1,13 @@
 {
-    "compilerOptions": {
-        "allowJs": true,
-        "declaration": true,
-        "esModuleInterop": true,
-        "module": "ESNext",
-        "moduleResolution": "node",
-        "outDir": "./dist",
-        "strict": true,
-        "target": "ESNext"
-    },
-    "exclude": ["dist", "node_modules", "**/*.spec.ts"]
+	"compilerOptions": {
+		"allowJs": true,
+		"declaration": true,
+		"esModuleInterop": true,
+		"module": "ESNext",
+		"moduleResolution": "node",
+		"outDir": "./dist",
+		"strict": true,
+		"target": "ESNext"
+	},
+	"exclude": ["dist", "node_modules", "**/*.spec.ts"]
 }

@@ -62,7 +62,15 @@ const defaultInstance = <T extends z.ZodSchema>(schema: T, source: any = {}): z.
 			return getDefaultValue(schema.options[0]);
 		}
 
-		return getDefaultValue(schema._def.innerType);
+		if (schema instanceof z.ZodRecord) {
+			return {};
+		}
+
+		if (schema._def && schema._def.innerType) {
+			return getDefaultValue(schema._def.innerType);
+		}
+
+		return undefined;
 	};
 
 	const processArray = (schema: z.ZodArray<any>, source: any[]): any[] => {
@@ -109,6 +117,8 @@ const defaultInstance = <T extends z.ZodSchema>(schema: T, source: any = {}): z.
 			return typeof value === 'boolean' ? value : false;
 		} else if (schema instanceof z.ZodNumber) {
 			return typeof value === 'number' ? value : (schema.minValue ?? 0);
+		} else if (schema instanceof z.ZodRecord) {
+			return processRecord(schema, value);
 		} else if (schema instanceof z.ZodString) {
 			return typeof value === 'string' ? value : '';
 		} else {
@@ -126,6 +136,21 @@ const defaultInstance = <T extends z.ZodSchema>(schema: T, source: any = {}): z.
 			} else {
 				result[key] = getDefaultValue(fieldSchema as z.ZodTypeAny);
 			}
+		}
+
+		return result;
+	};
+
+	const processRecord = (schema: z.ZodRecord<any, any>, source: any): any => {
+		if (typeof source !== 'object' || source === null) {
+			return {};
+		}
+
+		const valueSchema = schema._def.valueType;
+		const result: any = {};
+
+		for (const key in source) {
+			result[key] = processValue(valueSchema, source[key]);
 		}
 
 		return result;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { boolean, z } from 'zod';
+import { z } from 'zod';
 
 import defaultInstance from './index';
 
@@ -13,20 +13,22 @@ describe('defaultInstance', () => {
 
 	it('should handle with basic types', () => {
 		const schema = z.object({
-			string: z.string(),
-			number: z.number(),
-			boolean: z.boolean(),
-			date: z.date()
-		});
+            boolean: z.boolean(),
+            date: z.date(),
+            number: z.number(),
+            record: z.record(z.string()),
+            string: z.string()
+        });
 
 		const result = defaultInstance(schema);
 
 		expect(result).toEqual({
-			string: '',
-			number: 0,
-			boolean: false,
-			date: null
-		});
+            boolean: false,
+            date: null,
+            number: 0,
+            record: {},
+            string: ''
+        });
 	});
 
 	it('should handle with nested objects', () => {
@@ -78,11 +80,11 @@ describe('defaultInstance', () => {
 
 	describe('enum', () => {
 		it('should handle with multiple enums', () => {
-			const ColorEnum = z.enum(['red', 'green', 'blue']);
-			const SizeEnum = z.enum(['small', 'medium', 'large']);
+			const colorEnum = z.enum(['red', 'green', 'blue']);
+			const sizeEnum = z.enum(['small', 'medium', 'large']);
 			const schema = z.object({
-				color: ColorEnum,
-				size: SizeEnum
+				color: colorEnum,
+				size: sizeEnum
 			});
 
 			const result = defaultInstance(schema);
@@ -157,6 +159,29 @@ describe('defaultInstance', () => {
 			const result = defaultInstance(schema);
 
 			expect(result.createdAt).toBeNull();
+		});
+	});
+	
+	describe('record', () => {
+		it('should handle record', () => {
+			const schema = z.object({
+				dictionary: z.record(z.string())
+			});
+			const source = {
+				dictionary: {
+					key1: 'value1',
+					key2: 'value2'
+				}
+			};
+	
+			const result = defaultInstance(schema, source);
+	
+			expect(result).toEqual({
+				dictionary: {
+					key1: 'value1',
+					key2: 'value2'
+				}
+			});
 		});
 	});
 
@@ -293,6 +318,7 @@ describe('defaultInstance', () => {
 				object: z.object({
 					key: z.string()
 				}),
+				record: z.record(z.string()),
 				optional: z.string().optional(),
 				string: z.string(),
 				stringUndefined: z.string()
@@ -320,6 +346,7 @@ describe('defaultInstance', () => {
 					key: 'source key'
 				},
 				optional: 'provided',
+				record: { string: 'value', number: 42 },
 				string: 'source string',
 				stringUndefined: undefined
 			};
@@ -346,6 +373,7 @@ describe('defaultInstance', () => {
 					key: 'source key'
 				},
 				optional: 'provided',
+				record: { number: '', string: 'value' },
 				string: 'source string',
 				stringUndefined: ''
 			});

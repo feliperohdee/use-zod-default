@@ -4,109 +4,276 @@ import { z } from 'zod';
 import defaultInstance from './index';
 
 describe('defaultInstance', () => {
-	it('should handle empty object schema', () => {
-		const schema = z.object({});
-		const result = defaultInstance(schema);
+	describe('empty object', () => {
+		it('should handle empty object schema', () => {
+			const schema = z.object({});
+			const res = defaultInstance(schema);
 
-		expect(result).toEqual({});
+			expect(res).toEqual({});
+		});
+
+		it('should handle all types', () => {
+			enum NativeEnum {
+				A = 'A',
+				B = 'B',
+				C = 'C'
+			}
+
+			const schema = z.object({
+				any: z.any(),
+				bigint: z.bigint(),
+				boolean: z.boolean(),
+				date: z.date(),
+				default: z.string().default('default'),
+				discriminatedUnion: z.discriminatedUnion('type', [
+					z.object({ type: z.literal('a'), value: z.string() }),
+					z.object({ type: z.literal('b'), value: z.number() })
+				]),
+				enum: z.enum(['A', 'B', 'C']),
+				function: z.function(),
+				instanceof: z.instanceof(Date),
+				intersection: z.intersection(z.string(), z.number()),
+				map: z.map(z.string(), z.string()),
+				nan: z.nan(),
+				nativeEnum: z.nativeEnum(NativeEnum),
+				never: z.never(),
+				null: z.null(),
+				nullable: z.string().nullable(),
+				number: z.number(),
+				object: z.object({
+					key: z.string()
+				}),
+				promise: z.promise(z.string()),
+				record: z.record(z.string()),
+				set: z.set(z.string()),
+				string: z.string(),
+				optional: z.string().optional(),
+				symbol: z.symbol(),
+				tuple: z.tuple([z.string(), z.number()]),
+				undefined: z.undefined(),
+				union: z.union([z.string(), z.number()]),
+				void: z.void()
+			});
+
+			const res = defaultInstance(schema);
+
+			expect(res).toEqual({
+				any: undefined,
+				bigint: 0,
+				boolean: false,
+				date: null,
+				default: 'default',
+				discriminatedUnion: { type: 'a', value: '' },
+				enum: 'A',
+				function: expect.any(Function),
+				instanceof: undefined,
+				intersection: '',
+				map: new Map(),
+				nan: NaN,
+				nativeEnum: 'A',
+				never: undefined,
+				null: null,
+				nullable: null,
+				number: 0,
+				object: { key: '' },
+				promise: Promise.resolve(''),
+				record: {},
+				set: new Set(),
+				string: '',
+				optional: '',
+				symbol: '',
+				tuple: [],
+				undefined: undefined,
+				union: '',
+				void: undefined
+			});
+		});
+		it('should handle nested objects', () => {
+			const schema = z.object({
+				user: z.object({
+					name: z.string(),
+					age: z.number()
+				}),
+				settings: z.object({
+					isActive: z.boolean()
+				})
+			});
+
+			const res = defaultInstance(schema);
+
+			expect(res).toEqual({
+				user: { name: '', age: 0 },
+				settings: { isActive: false }
+			});
+		});
+
+		it('should handle optional fields', () => {
+			const schema = z.object({
+				required: z.string(),
+				optional: z.number().optional()
+			});
+
+			const res = defaultInstance(schema);
+
+			expect(res).toEqual({
+				required: '',
+				optional: 0
+			});
+		});
+
+		it('should handle default values', () => {
+			const schema = z.object({
+				age: z.number().default(30),
+				map: z.map(z.string(), z.string()).default(new Map([['key', 'value']])),
+				name: z.string().default('John'),
+				set: z.set(z.string()).default(new Set(['value']))
+			});
+
+			const res = defaultInstance(schema);
+
+			expect(res).toEqual({
+				age: 30,
+				map: new Map([['key', 'value']]),
+				name: 'John',
+				set: new Set(['value'])
+			});
+		});
+
+		it('should handle nullable types', () => {
+			const schema = z.object({
+				nullableString: z.string().nullable(),
+				nullableNumber: z.number().nullable()
+			});
+
+			const res = defaultInstance(schema);
+
+			expect(res).toEqual({
+				nullableString: null,
+				nullableNumber: null
+			});
+		});
+
+		it('should handle unknown types', () => {
+			const schema = z.object({
+				unknownNullableType: z.unknown().nullable(),
+				unknownOptionalType: z.unknown().optional(),
+				unknownType: z.unknown(),
+				unknwonWithDefault: z.unknown().default('default')
+			});
+
+			const res = defaultInstance(schema);
+
+			expect(res).toEqual({
+				unknownNullableType: null,
+				unknownOptionalType: undefined,
+				unknownType: undefined,
+				unknwonWithDefault: 'default'
+			});
+		});
 	});
 
-	it('should handle with basic types', () => {
-		const schema = z.object({
-			boolean: z.boolean(),
-			date: z.date(),
-			number: z.number(),
-			record: z.record(z.string()),
-			string: z.string()
-		});
+	describe('array', () => {
+		it('should handle array', () => {
+			const schema = z.object({
+				items: z.array(z.string())
+			});
+			const res = defaultInstance(schema);
 
-		const result = defaultInstance(schema);
-
-		expect(result).toEqual({
-			boolean: false,
-			date: null,
-			number: 0,
-			record: {},
-			string: ''
+			expect(res).toEqual({
+				items: []
+			});
 		});
 	});
 
-	it('should handle with nested objects', () => {
-		const schema = z.object({
-			user: z.object({
-				name: z.string(),
-				age: z.number()
-			}),
-			settings: z.object({
-				isActive: z.boolean()
-			})
-		});
+	describe('boolean', () => {
+		it('should handle boolean', () => {
+			const schema = z.object({
+				enabled: z.boolean()
+			});
+			const res = defaultInstance(schema);
 
-		const result = defaultInstance(schema);
-
-		expect(result).toEqual({
-			user: { name: '', age: 0 },
-			settings: { isActive: false }
+			expect(res).toEqual({ enabled: false });
 		});
 	});
 
-	it('should handle with optional fields', () => {
-		const schema = z.object({
-			required: z.string(),
-			optional: z.number().optional()
-		});
+	describe('date', () => {
+		it('should handle date', () => {
+			const schema = z.object({
+				createdAt: z.date()
+			});
 
-		const result = defaultInstance(schema);
+			const res = defaultInstance(schema);
 
-		expect(result).toEqual({
-			required: '',
-			optional: 0
+			expect(res.createdAt).toBeNull();
 		});
 	});
 
-	it('should handle with default values', () => {
-		const schema = z.object({
-			name: z.string().default('John'),
-			age: z.number().default(30)
-		});
+	describe('discriminated union', () => {
+		it('should handle discriminated union', () => {
+			const schema = z.discriminatedUnion('type', [
+				z.object({
+					type: z.literal('a'),
+					value: z.string()
+				}),
+				z.object({
+					type: z.literal('b'),
+					value: z.number()
+				})
+			]);
 
-		const result = defaultInstance(schema);
+			const res = defaultInstance(schema);
 
-		expect(result).toEqual({
-			name: 'John',
-			age: 30
-		});
-	});
-
-	it('should handle nullable types', () => {
-		const schema = z.object({
-			nullableString: z.string().nullable(),
-			nullableNumber: z.number().nullable()
-		});
-
-		const result = defaultInstance(schema);
-
-		expect(result).toEqual({
-			nullableString: null,
-			nullableNumber: null
+			expect(res).toEqual({ type: 'a', value: '' });
 		});
 	});
 
-	it('should handle unknown types', () => {
-		const schema = z.object({
-			unknownNullableType: z.unknown().nullable(),
-			unknownOptionalType: z.unknown().optional(),
-			unknownType: z.unknown(),
-			unknwonWithDefault: z.unknown().default('default')
+	describe('effects', () => {
+		it('should handle ZodEffects', () => {
+			const schema = z
+				.object({
+					name: z.string(),
+					age: z.number()
+				})
+				.refine(
+					data => {
+						return data.age >= 18;
+					},
+					{
+						message: 'Must be 18 or older',
+						path: ['age']
+					}
+				);
+
+			const res = defaultInstance(schema);
+
+			expect(res).toEqual({
+				name: '',
+				age: 0
+			});
 		});
 
-		const result = defaultInstance(schema);
+		it('should handle nested ZodEffects', () => {
+			const innerSchema = z
+				.object({
+					value: z.number()
+				})
+				.refine(data => {
+					return data.value > 0;
+				});
 
-		expect(result).toEqual({
-			unknownNullableType: null,
-			unknownOptionalType: undefined,
-			unknownType: undefined,
-			unknwonWithDefault: 'default'
+			const outerSchema = z
+				.object({
+					field: innerSchema
+				})
+				.refine(data => {
+					return data.field.value < 100;
+				});
+
+			const res = defaultInstance(outerSchema);
+
+			expect(res).toEqual({
+				field: { value: 0 }
+			});
 		});
 	});
 
@@ -119,78 +286,80 @@ describe('defaultInstance', () => {
 				size: sizeEnum
 			});
 
-			const result = defaultInstance(schema);
+			const res = defaultInstance(schema);
 
-			expect(result).toEqual({
+			expect(res).toEqual({
 				color: 'red',
 				size: 'small'
 			});
 		});
 	});
 
-	describe('effects', () => {
-		it('should handle ZodEffects', () => {
-			const schema = z
-				.object({
-					name: z.string(),
-					age: z.number()
-				})
-				.refine(data => data.age >= 18, {
-					message: 'Must be 18 or older',
-					path: ['age']
-				});
-
-			const result = defaultInstance(schema);
-
-			expect(result).toEqual({
-				name: '',
-				age: 0
+	describe('literal', () => {
+		it('should handle literal', () => {
+			const schema = z.object({
+				literal: z.literal('value')
 			});
-		});
+			const res = defaultInstance(schema);
 
-		it('should handle nested ZodEffects', () => {
-			const innerSchema = z
-				.object({
-					value: z.number()
-				})
-				.refine(data => data.value > 0);
-
-			const outerSchema = z
-				.object({
-					field: innerSchema
-				})
-				.refine(data => data.field.value < 100);
-
-			const result = defaultInstance(outerSchema);
-
-			expect(result).toEqual({
-				field: { value: 0 }
-			});
+			expect(res).toEqual({ literal: 'value' });
 		});
 	});
 
-	describe('array', () => {
-		it('should handle array', () => {
+	describe('map', () => {
+		it('should handle map', () => {
 			const schema = z.object({
-				items: z.array(z.string())
+				map: z.map(z.string(), z.string())
 			});
-			const result = defaultInstance(schema);
+			const res = defaultInstance(schema);
 
-			expect(result).toEqual({
-				items: []
-			});
+			expect(res.map).toEqual(new Map());
 		});
 	});
 
-	describe('date', () => {
-		it('should handle date', () => {
+	describe('nullable', () => {
+		it('should handle nullable', () => {
 			const schema = z.object({
-				createdAt: z.date()
+				nullable: z.string().nullable()
 			});
+			const res = defaultInstance(schema);
 
-			const result = defaultInstance(schema);
+			expect(res).toEqual({ nullable: null });
+		});
+	});
 
-			expect(result.createdAt).toBeNull();
+	describe('number', () => {
+		it('should handle number', () => {
+			const schema = z.object({
+				number: z.number()
+			});
+			const res = defaultInstance(schema);
+
+			expect(res).toEqual({ number: 0 });
+		});
+	});
+
+	describe('object', () => {
+		it('should handle object', () => {
+			const schema = z.object({
+				object: z.object({
+					key: z.string()
+				})
+			});
+			const res = defaultInstance(schema);
+
+			expect(res).toEqual({ object: { key: '' } });
+		});
+	});
+
+	describe('pipeline', () => {
+		it('should handle pipeline', () => {
+			const schema = z.object({
+				pipeline: z.pipeline(z.string(), z.string())
+			});
+			const res = defaultInstance(schema);
+
+			expect(res).toEqual({ pipeline: '' });
 		});
 	});
 
@@ -206,9 +375,9 @@ describe('defaultInstance', () => {
 				}
 			};
 
-			const result = defaultInstance(schema, source);
+			const res = defaultInstance(schema, source);
 
-			expect(result).toEqual({
+			expect(res).toEqual({
 				dictionary: {
 					key1: 'value1',
 					key2: 'value2'
@@ -217,42 +386,51 @@ describe('defaultInstance', () => {
 		});
 	});
 
+	describe('set', () => {
+		it('should handle set', () => {
+			const schema = z.object({
+				set: z.set(z.string())
+			});
+			const res = defaultInstance(schema);
+
+			expect(res.set).toEqual(new Set());
+		});
+	});
+
+	describe('string', () => {
+		it('should handle string', () => {
+			const schema = z.object({
+				string: z.string()
+			});
+			const res = defaultInstance(schema);
+
+			expect(res).toEqual({ string: '' });
+		});
+	});
+
+	describe('symbol', () => {
+		it('should handle symbol', () => {
+			const schema = z.object({
+				symbol: z.symbol()
+			});
+			const res = defaultInstance(schema);
+
+			expect(res).toEqual({ symbol: '' });
+		});
+	});
+
+	describe('union', () => {
+		it('should handle union', () => {
+			const schema = z.object({
+				union: z.union([z.string(), z.number()])
+			});
+			const res = defaultInstance(schema);
+
+			expect(res).toEqual({ union: '' });
+		});
+	});
+
 	describe('with source', () => {
-		it('should use provided date from source', () => {
-			const schema = z.object({
-				created: z.date(),
-				updated: z.date()
-			});
-
-			const source = {
-				created: new Date('2023-01-01')
-			};
-
-			const result = defaultInstance(schema, source);
-
-			expect(result.created).toEqual(new Date('2023-01-01'));
-			expect(result.updated).toBeNull();
-		});
-
-		it('should use provided enum value from source', () => {
-			const statusEnum = z.enum(['pending', 'active', 'inactive']);
-			const schema = z.object({
-				status: statusEnum,
-				otherStatus: statusEnum
-			});
-
-			const source = {
-				status: 'active'
-			};
-
-			const result = defaultInstance(schema, source);
-
-			expect(result).toEqual({
-				status: 'active',
-				otherStatus: 'pending'
-			});
-		});
-
 		it('should merge arrays', () => {
 			const schema = z.object({
 				items: z.array(
@@ -267,9 +445,9 @@ describe('defaultInstance', () => {
 				items: [{ id: 1, name: 'Item 1' }, { id: 2 }]
 			};
 
-			const result = defaultInstance(schema, source);
+			const res = defaultInstance(schema, source);
 
-			expect(result).toEqual({
+			expect(res).toEqual({
 				items: [
 					{ id: 1, name: 'Item 1' },
 					{ id: 2, name: '' }
@@ -312,9 +490,9 @@ describe('defaultInstance', () => {
 				]
 			};
 
-			const result = defaultInstance(schema, source);
+			const res = defaultInstance(schema, source);
 
-			expect(result).toEqual({
+			expect(res).toEqual({
 				user: {
 					personal: { name: 'John', age: 0 },
 					settings: { theme: 'dark', notifications: false }
@@ -331,7 +509,15 @@ describe('defaultInstance', () => {
 		});
 
 		it('should handle all types', () => {
+			enum NativeEnum {
+				A = 'A',
+				B = 'B',
+				C = 'C'
+			}
+
+			const symbol = Symbol('symbol');
 			const schema = z.object({
+				any: z.any(),
 				array: z.array(z.string()),
 				arrayObject: z.array(
 					z.object({
@@ -339,24 +525,42 @@ describe('defaultInstance', () => {
 						b: z.string()
 					})
 				),
+				bigint: z.bigint(),
 				boolean: z.boolean(),
 				booleanUndefined: z.boolean(),
 				date: z.date(),
 				default: z.string().default('default'),
 				enum: z.enum(['A', 'B', 'C']),
+				function: z.function(),
+				instanceof: z.instanceof(Date),
+				intersection: z.intersection(z.string(), z.number()),
+				map: z.map(z.string(), z.string()),
+				nan: z.nan(),
+				nativeEnum: z.nativeEnum(NativeEnum),
+				never: z.never(),
+				null: z.null(),
 				nullable: z.string().nullable(),
 				number: z.number(),
 				numberUndefined: z.number(),
+				numberSet: z.set(z.number()),
 				object: z.object({
 					key: z.string()
 				}),
-				record: z.record(z.string()),
 				optional: z.string().optional(),
+				promise: z.promise(z.string()),
+				record: z.record(z.string()),
 				string: z.string(),
-				stringUndefined: z.string()
+				stringSet: z.set(z.string()),
+				stringUndefined: z.string(),
+				symbol: z.symbol(),
+				tuple: z.tuple([z.string(), z.number()]),
+				undefined: z.undefined(),
+				union: z.union([z.string(), z.number()]),
+				void: z.void()
 			});
 
 			const source = {
+				any: 'any',
 				array: ['source'],
 				arrayObject: [
 					{
@@ -364,28 +568,46 @@ describe('defaultInstance', () => {
 						forbidden: 'forbidden'
 					}
 				],
+				bigint: 10,
 				boolean: true,
 				booleanUndefined: undefined,
 				date: new Date('2023-01-01'),
 				default: 'overridden',
 				enum: 'B',
 				forbidden: 'forbidden',
+				function: () => null,
+				instanceof: new Date('2023-01-01'),
+				intersection: 42,
+				map: new Map([['key', 'value']]),
+				nan: NaN,
+				nativeEnum: 'B',
+				never: undefined,
+				null: null,
 				nullable: null,
 				number: 42,
 				numberUndefined: undefined,
+				numberSet: new Set([42]),
 				object: {
 					forbidden: 'forbidden',
 					key: 'source key'
 				},
 				optional: 'provided',
+				promise: Promise.resolve('promise'),
 				record: { string: 'value', number: 42 },
 				string: 'source string',
-				stringUndefined: undefined
+				stringSet: new Set(['value']),
+				stringUndefined: undefined,
+				symbol,
+				tuple: ['tuple', 42],
+				undefined: undefined,
+				union: 'union',
+				void: undefined
 			};
 
-			const result = defaultInstance(schema, source);
+			const res = defaultInstance(schema, source);
 
-			expect(result).toEqual({
+			expect(res).toEqual({
+				any: 'any',
 				array: ['source'],
 				arrayObject: [
 					{
@@ -393,27 +615,44 @@ describe('defaultInstance', () => {
 						b: ''
 					}
 				],
+				bigint: 10,
 				boolean: true,
 				booleanUndefined: false,
 				date: new Date('2023-01-01'),
 				default: 'overridden',
 				enum: 'B',
+				function: expect.any(Function),
+				instanceof: new Date('2023-01-01'),
+				intersection: 42,
+				map: new Map([['key', 'value']]),
+				nan: NaN,
+				nativeEnum: 'B',
+				never: undefined,
+				null: null,
 				nullable: null,
 				number: 42,
 				numberUndefined: 0,
+				numberSet: new Set([42]),
 				object: {
 					key: 'source key'
 				},
 				optional: 'provided',
+				promise: Promise.resolve('promise'),
 				record: { number: '', string: 'value' },
 				string: 'source string',
-				stringUndefined: ''
+				stringSet: new Set(['value']),
+				stringUndefined: '',
+				symbol,
+				tuple: ['tuple', 42],
+				undefined: undefined,
+				union: 'union',
+				void: undefined
 			});
 		});
 
-		it('should handle discriminated unions correctly', () => {
+		it('should handle discriminated unions', () => {
 			const schema = z.object({
-				result: z.discriminatedUnion('status', [
+				res: z.discriminatedUnion('status', [
 					z.object({
 						status: z.literal('success'),
 						data: z.string()
@@ -426,7 +665,7 @@ describe('defaultInstance', () => {
 			});
 
 			const successSource = {
-				result: {
+				res: {
 					status: 'success',
 					data: 'Some data',
 					extraField: 'should be removed'
@@ -434,52 +673,52 @@ describe('defaultInstance', () => {
 			};
 
 			const errorSource = {
-				result: {
+				res: {
 					status: 'error'
 				}
 			};
 
 			const invalidSource = {
-				result: {
+				res: {
 					status: 'invalid'
 				}
 			};
 
-			const emptyResult = defaultInstance(schema);
-			const successResult = defaultInstance(schema, successSource);
-			const errorResult = defaultInstance(schema, errorSource);
-			const invalidResult = defaultInstance(schema, invalidSource);
+			const emptyRes = defaultInstance(schema);
+			const successRes = defaultInstance(schema, successSource);
+			const errorRes = defaultInstance(schema, errorSource);
+			const invalidRes = defaultInstance(schema, invalidSource);
 
-			expect(emptyResult).toEqual({
-				result: {
+			expect(emptyRes).toEqual({
+				res: {
 					status: 'success',
 					data: ''
 				}
 			});
 
-			expect(successResult).toEqual({
-				result: {
+			expect(successRes).toEqual({
+				res: {
 					status: 'success',
 					data: 'Some data'
 				}
 			});
 
-			expect(errorResult).toEqual({
-				result: {
+			expect(errorRes).toEqual({
+				res: {
 					status: 'error',
 					message: ''
 				}
 			});
 
-			expect(invalidResult).toEqual({
-				result: {
+			expect(invalidRes).toEqual({
+				res: {
 					status: 'success',
 					data: ''
 				}
 			});
 		});
 
-		it('should handle unions correctly', () => {
+		it('should handle unions', () => {
 			const schema = z.object({
 				data: z.union([
 					z.object({ type: z.literal('string'), value: z.string() }),
@@ -513,38 +752,38 @@ describe('defaultInstance', () => {
 				}
 			};
 
-			const emptyResult = defaultInstance(schema);
-			const stringResult = defaultInstance(schema, stringSource);
-			const numberResult = defaultInstance(schema, numberSource);
-			const directStringResult = defaultInstance(schema, directStringSource);
-			const invalidResult = defaultInstance(schema, invalidSource);
+			const emptyRes = defaultInstance(schema);
+			const stringRes = defaultInstance(schema, stringSource);
+			const numberRes = defaultInstance(schema, numberSource);
+			const directStringRes = defaultInstance(schema, directStringSource);
+			const invalidRes = defaultInstance(schema, invalidSource);
 
-			expect(emptyResult).toEqual({
+			expect(emptyRes).toEqual({
 				data: {
 					type: 'string',
 					value: ''
 				}
 			});
 
-			expect(stringResult).toEqual({
+			expect(stringRes).toEqual({
 				data: {
 					type: 'string',
 					value: 'test'
 				}
 			});
 
-			expect(numberResult).toEqual({
+			expect(numberRes).toEqual({
 				data: {
 					type: 'number',
 					value: 42
 				}
 			});
 
-			expect(directStringResult).toEqual({
+			expect(directStringRes).toEqual({
 				data: 'direct string'
 			});
 
-			expect(invalidResult).toEqual({
+			expect(invalidRes).toEqual({
 				data: {
 					type: 'string',
 					value: ''
@@ -552,7 +791,7 @@ describe('defaultInstance', () => {
 			});
 		});
 
-		it('should handle deeply nested unions and discriminated unions correctly', () => {
+		it('should handle deeply nested unions and discriminated unions', () => {
 			const nestedSchema = z.object({
 				data: z.union([
 					z.string(),
@@ -588,28 +827,28 @@ describe('defaultInstance', () => {
 				}
 			};
 
-			const emptyResult = defaultInstance(nestedSchema);
-			const result1 = defaultInstance(nestedSchema, validSource1);
-			const result2 = defaultInstance(nestedSchema, validSource2);
-			const invalidResult = defaultInstance(nestedSchema, invalidSource);
+			const emptyRes = defaultInstance(nestedSchema);
+			const res1 = defaultInstance(nestedSchema, validSource1);
+			const res2 = defaultInstance(nestedSchema, validSource2);
+			const invalidRes = defaultInstance(nestedSchema, invalidSource);
 
-			expect(emptyResult).toEqual({
+			expect(emptyRes).toEqual({
 				data: ''
 			});
 
-			expect(result1).toEqual({
+			expect(res1).toEqual({
 				data: {
 					nested: { type: 'a', value: 'test' }
 				}
 			});
 
-			expect(result2).toEqual({
+			expect(res2).toEqual({
 				data: {
 					nested: { type: 'c', value: { deepNested: true } }
 				}
 			});
 
-			expect(invalidResult).toEqual({
+			expect(invalidRes).toEqual({
 				data: ''
 			});
 		});

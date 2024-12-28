@@ -6,6 +6,10 @@ const defaultInstance = <T extends z.ZodSchema>(schema: T, source: any = {}): z.
 			return schema._def.defaultValue();
 		}
 
+		if (schema instanceof z.ZodAny) {
+			return undefined;
+		}
+
 		if (schema instanceof z.ZodArray) {
 			return [];
 		}
@@ -30,8 +34,42 @@ const defaultInstance = <T extends z.ZodSchema>(schema: T, source: any = {}): z.
 			return schema.options[0];
 		}
 
+		if (schema instanceof z.ZodFunction) {
+			return () => null;
+		}
+
+		if (schema instanceof z.ZodIntersection) {
+			return defaultInstance(schema._def.left, source);
+		}
+
 		if (schema instanceof z.ZodLiteral) {
 			return schema.value;
+		}
+
+		if (schema instanceof z.ZodMap) {
+			return new Map();
+		}
+
+		if (schema instanceof z.ZodNativeEnum) {
+			const keys = Object.keys(schema._def.values);
+			
+			return schema._def.values[keys[0]];
+		}
+
+		if (schema instanceof z.ZodNaN) {
+			return NaN;
+		}
+
+		if (schema instanceof z.ZodNever) {
+			return undefined;
+		}
+
+		if (schema instanceof z.ZodNull) {
+			return null;
+		}
+
+		if (schema instanceof z.ZodNullable) {
+			return null;
 		}
 
 		if (schema instanceof z.ZodNumber || schema instanceof z.ZodBigInt) {
@@ -50,6 +88,18 @@ const defaultInstance = <T extends z.ZodSchema>(schema: T, source: any = {}): z.
 			return getDefaultValue(schema._def.out);
 		}
 
+		if (schema instanceof z.ZodPromise) {
+			return Promise.resolve(getDefaultValue(schema.unwrap()));
+		}
+
+		if (schema instanceof z.ZodRecord) {
+			return {};
+		}
+
+		if (schema instanceof z.ZodSet) {
+			return new Set();
+		}
+
 		if (schema instanceof z.ZodString) {
 			return '';
 		}
@@ -58,16 +108,24 @@ const defaultInstance = <T extends z.ZodSchema>(schema: T, source: any = {}): z.
 			return '';
 		}
 
+		if (schema instanceof z.ZodTuple) {
+			return [];
+		}
+
 		if (schema instanceof z.ZodUnion) {
 			return getDefaultValue(schema.options[0]);
 		}
 
-		if (schema instanceof z.ZodRecord) {
-			return {};
+		if (schema instanceof z.ZodUnknown) {
+			return undefined;
 		}
 
-		if (schema instanceof z.ZodNullable) {
-			return null;
+		if (schema instanceof z.ZodUndefined) {
+			return undefined;
+		}
+
+		if (schema instanceof z.ZodVoid) {
+			return undefined;
 		}
 
 		if (schema._def && schema._def.innerType) {
@@ -119,10 +177,14 @@ const defaultInstance = <T extends z.ZodSchema>(schema: T, source: any = {}): z.
 			return processUnion(schema, value);
 		} else if (schema instanceof z.ZodBoolean) {
 			return typeof value === 'boolean' ? value : false;
+		} else if (schema instanceof z.ZodMap) {
+			return processMap(schema, value);
 		} else if (schema instanceof z.ZodNumber) {
 			return typeof value === 'number' ? value : (schema.minValue ?? 0);
 		} else if (schema instanceof z.ZodRecord) {
 			return processRecord(schema, value);
+		} else if (schema instanceof z.ZodSet) {
+			return processSet(schema, value);
 		} else if (schema instanceof z.ZodString) {
 			return typeof value === 'string' ? value : '';
 		} else if (schema instanceof z.ZodNullable) {
@@ -130,6 +192,21 @@ const defaultInstance = <T extends z.ZodSchema>(schema: T, source: any = {}): z.
 		} else {
 			return value;
 		}
+	};
+
+	const processMap = (schema: z.ZodMap<any, any>, source: any): any => {
+		if (!(source instanceof Map)) {
+			return new Map();
+		}
+
+		const valueSchema = schema._def.valueType;
+		const result: any = new Map();
+
+		source.forEach((value, key) => {
+			result.set(key, processValue(valueSchema, value));
+		});
+
+		return result;
 	};
 
 	const processObject = (schema: z.ZodObject<any>, source: any): any => {
@@ -157,6 +234,21 @@ const defaultInstance = <T extends z.ZodSchema>(schema: T, source: any = {}): z.
 
 		for (const key in source) {
 			result[key] = processValue(valueSchema, source[key]);
+		}
+
+		return result;
+	};
+
+	const processSet = (schema: z.ZodSet<any>, source: Set<any>): any => {
+		if (!(source instanceof Set)) {
+			return new Set();
+		}
+
+		const valueSchema = schema._def.valueType;
+		const result: any = new Set();
+
+		for (const value of source) {
+			result.add(processValue(valueSchema, value));
 		}
 
 		return result;

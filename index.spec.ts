@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
-import defaultInstance from './index';
+import zDefault from './index';
 
-describe('defaultInstance', () => {
-	describe('empty object', () => {
+describe('zDefault', () => {
+	describe('empty object', () => {		
 		it('should handle empty object schema', () => {
 			const schema = z.object({});
-			const res = defaultInstance(schema);
+			const res = zDefault(schema);
 
 			expect(res).toEqual({});
 		});
@@ -55,7 +55,7 @@ describe('defaultInstance', () => {
 				void: z.void()
 			});
 
-			const res = defaultInstance(schema);
+			const res = zDefault(schema);
 
 			expect(res).toEqual({
 				any: undefined,
@@ -99,7 +99,7 @@ describe('defaultInstance', () => {
 				})
 			});
 
-			const res = defaultInstance(schema);
+			const res = zDefault(schema);
 
 			expect(res).toEqual({
 				user: { name: '', age: 0 },
@@ -113,7 +113,7 @@ describe('defaultInstance', () => {
 				optional: z.number().optional()
 			});
 
-			const res = defaultInstance(schema);
+			const res = zDefault(schema);
 
 			expect(res).toEqual({
 				required: '',
@@ -129,7 +129,7 @@ describe('defaultInstance', () => {
 				set: z.set(z.string()).default(new Set(['value']))
 			});
 
-			const res = defaultInstance(schema);
+			const res = zDefault(schema);
 
 			expect(res).toEqual({
 				age: 30,
@@ -145,7 +145,7 @@ describe('defaultInstance', () => {
 				nullableNumber: z.number().nullable()
 			});
 
-			const res = defaultInstance(schema);
+			const res = zDefault(schema);
 
 			expect(res).toEqual({
 				nullableString: null,
@@ -161,7 +161,7 @@ describe('defaultInstance', () => {
 				unknwonWithDefault: z.unknown().default('default')
 			});
 
-			const res = defaultInstance(schema);
+			const res = zDefault(schema);
 
 			expect(res).toEqual({
 				unknownNullableType: null,
@@ -177,7 +177,7 @@ describe('defaultInstance', () => {
 			const schema = z.object({
 				items: z.array(z.string())
 			});
-			const res = defaultInstance(schema);
+			const res = zDefault(schema);
 
 			expect(res).toEqual({
 				items: []
@@ -190,7 +190,7 @@ describe('defaultInstance', () => {
 			const schema = z.object({
 				enabled: z.boolean()
 			});
-			const res = defaultInstance(schema);
+			const res = zDefault(schema);
 
 			expect(res).toEqual({ enabled: false });
 		});
@@ -202,7 +202,7 @@ describe('defaultInstance', () => {
 				createdAt: z.date()
 			});
 
-			const res = defaultInstance(schema);
+			const res = zDefault(schema);
 
 			expect(res.createdAt).toBeNull();
 		});
@@ -221,7 +221,7 @@ describe('defaultInstance', () => {
 				})
 			]);
 
-			const res = defaultInstance(schema);
+			const res = zDefault(schema);
 
 			expect(res).toEqual({ type: 'a', value: '' });
 		});
@@ -244,7 +244,7 @@ describe('defaultInstance', () => {
 					}
 				);
 
-			const res = defaultInstance(schema);
+			const res = zDefault(schema);
 
 			expect(res).toEqual({
 				name: '',
@@ -269,7 +269,7 @@ describe('defaultInstance', () => {
 					return data.field.value < 100;
 				});
 
-			const res = defaultInstance(outerSchema);
+			const res = zDefault(outerSchema);
 
 			expect(res).toEqual({
 				field: { value: 0 }
@@ -286,7 +286,7 @@ describe('defaultInstance', () => {
 				size: sizeEnum
 			});
 
-			const res = defaultInstance(schema);
+			const res = zDefault(schema);
 
 			expect(res).toEqual({
 				color: 'red',
@@ -300,7 +300,7 @@ describe('defaultInstance', () => {
 			const schema = z.object({
 				literal: z.literal('value')
 			});
-			const res = defaultInstance(schema);
+			const res = zDefault(schema);
 
 			expect(res).toEqual({ literal: 'value' });
 		});
@@ -311,7 +311,7 @@ describe('defaultInstance', () => {
 			const schema = z.object({
 				map: z.map(z.string(), z.string())
 			});
-			const res = defaultInstance(schema);
+			const res = zDefault(schema);
 
 			expect(res.map).toEqual(new Map());
 		});
@@ -322,7 +322,7 @@ describe('defaultInstance', () => {
 			const schema = z.object({
 				nullable: z.string().nullable()
 			});
-			const res = defaultInstance(schema);
+			const res = zDefault(schema);
 
 			expect(res).toEqual({ nullable: null });
 		});
@@ -333,7 +333,7 @@ describe('defaultInstance', () => {
 			const schema = z.object({
 				number: z.number()
 			});
-			const res = defaultInstance(schema);
+			const res = zDefault(schema);
 
 			expect(res).toEqual({ number: 0 });
 		});
@@ -346,7 +346,7 @@ describe('defaultInstance', () => {
 					key: z.string()
 				})
 			});
-			const res = defaultInstance(schema);
+			const res = zDefault(schema);
 
 			expect(res).toEqual({ object: { key: '' } });
 		});
@@ -357,7 +357,7 @@ describe('defaultInstance', () => {
 			const schema = z.object({
 				pipeline: z.pipeline(z.string(), z.string())
 			});
-			const res = defaultInstance(schema);
+			const res = zDefault(schema);
 
 			expect(res).toEqual({ pipeline: '' });
 		});
@@ -375,7 +375,7 @@ describe('defaultInstance', () => {
 				}
 			};
 
-			const res = defaultInstance(schema, source);
+			const res = zDefault(schema, source);
 
 			expect(res).toEqual({
 				dictionary: {
@@ -391,7 +391,7 @@ describe('defaultInstance', () => {
 			const schema = z.object({
 				set: z.set(z.string())
 			});
-			const res = defaultInstance(schema);
+			const res = zDefault(schema);
 
 			expect(res.set).toEqual(new Set());
 		});
@@ -402,7 +402,7 @@ describe('defaultInstance', () => {
 			const schema = z.object({
 				string: z.string()
 			});
-			const res = defaultInstance(schema);
+			const res = zDefault(schema);
 
 			expect(res).toEqual({ string: '' });
 		});
@@ -413,7 +413,7 @@ describe('defaultInstance', () => {
 			const schema = z.object({
 				symbol: z.symbol()
 			});
-			const res = defaultInstance(schema);
+			const res = zDefault(schema);
 
 			expect(res).toEqual({ symbol: '' });
 		});
@@ -424,7 +424,7 @@ describe('defaultInstance', () => {
 			const schema = z.object({
 				union: z.union([z.string(), z.number()])
 			});
-			const res = defaultInstance(schema);
+			const res = zDefault(schema);
 
 			expect(res).toEqual({ union: '' });
 		});
@@ -445,7 +445,7 @@ describe('defaultInstance', () => {
 				items: [{ id: 1, name: 'Item 1' }, { id: 2 }]
 			};
 
-			const res = defaultInstance(schema, source);
+			const res = zDefault(schema, source);
 
 			expect(res).toEqual({
 				items: [
@@ -490,7 +490,7 @@ describe('defaultInstance', () => {
 				]
 			};
 
-			const res = defaultInstance(schema, source);
+			const res = zDefault(schema, source);
 
 			expect(res).toEqual({
 				user: {
@@ -604,7 +604,7 @@ describe('defaultInstance', () => {
 				void: undefined
 			};
 
-			const res = defaultInstance(schema, source);
+			const res = zDefault(schema, source);
 
 			expect(res).toEqual({
 				any: 'any',
@@ -684,10 +684,10 @@ describe('defaultInstance', () => {
 				}
 			};
 
-			const emptyRes = defaultInstance(schema);
-			const successRes = defaultInstance(schema, successSource);
-			const errorRes = defaultInstance(schema, errorSource);
-			const invalidRes = defaultInstance(schema, invalidSource);
+			const emptyRes = zDefault(schema);
+			const successRes = zDefault(schema, successSource);
+			const errorRes = zDefault(schema, errorSource);
+			const invalidRes = zDefault(schema, invalidSource);
 
 			expect(emptyRes).toEqual({
 				res: {
@@ -752,11 +752,11 @@ describe('defaultInstance', () => {
 				}
 			};
 
-			const emptyRes = defaultInstance(schema);
-			const stringRes = defaultInstance(schema, stringSource);
-			const numberRes = defaultInstance(schema, numberSource);
-			const directStringRes = defaultInstance(schema, directStringSource);
-			const invalidRes = defaultInstance(schema, invalidSource);
+			const emptyRes = zDefault(schema);
+			const stringRes = zDefault(schema, stringSource);
+			const numberRes = zDefault(schema, numberSource);
+			const directStringRes = zDefault(schema, directStringSource);
+			const invalidRes = zDefault(schema, invalidSource);
 
 			expect(emptyRes).toEqual({
 				data: {
@@ -827,10 +827,10 @@ describe('defaultInstance', () => {
 				}
 			};
 
-			const emptyRes = defaultInstance(nestedSchema);
-			const res1 = defaultInstance(nestedSchema, validSource1);
-			const res2 = defaultInstance(nestedSchema, validSource2);
-			const invalidRes = defaultInstance(nestedSchema, invalidSource);
+			const emptyRes = zDefault(nestedSchema);
+			const res1 = zDefault(nestedSchema, validSource1);
+			const res2 = zDefault(nestedSchema, validSource2);
+			const invalidRes = zDefault(nestedSchema, invalidSource);
 
 			expect(emptyRes).toEqual({
 				data: ''

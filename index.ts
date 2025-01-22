@@ -158,12 +158,12 @@ const defaultInstance = <T extends z.ZodSchema>(schema: T, source: any = {}): z.
 			return option.shape[discriminator] instanceof z.ZodLiteral && option.shape[discriminator].value === discriminatorValue;
 		});
 
-		if (matchingSchema) {
-			return processObject(matchingSchema, source);
-		} else {
+		if (!matchingSchema) {
 			// If no matching schema is found, use the first option as default
-			return processObject(schema.options[0], {});
+			return processObject(schema.options[0], source);
 		}
+
+		return processObject(matchingSchema, source);
 	};
 
 	const processValue = (schema: z.ZodTypeAny, value: any): any => {

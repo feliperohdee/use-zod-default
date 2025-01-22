@@ -712,7 +712,7 @@ describe('zDefault', () => {
 
 			expect(invalidRes).toEqual({
 				res: {
-					status: 'success',
+					status: 'invalid',
 					data: ''
 				}
 			});

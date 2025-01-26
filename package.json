@@ -14,10 +14,10 @@
 	],
 	"license": "MIT",
 	"main": "dist/index.js",
-	"name": "zod-default-instance",
+	"name": "use-zod-default",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/feliperohdee/zod-default-instance"
+		"url": "https://github.com/feliperohdee/use-zod-default"
 	},
 	"scripts": {
 		"build": "rm -rf dist && tsc -p tsconfig.json",
@@ -25,5 +25,5 @@
 		"npm-publish": "yarn test --run && yarn build && yarn version --patch --no-git-tag-version && yarn publish --non-interactive",
 		"test": "vitest"
 	},
-	"version": "1.0.17"
+	"version": "1.0.1"
 }

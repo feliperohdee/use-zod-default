@@ -1,4 +1,4 @@
-# zod-default-instance
+# use-zod-default
 
 Effortlessly create default instances from Zod schemas with intelligent type inference and flexible customization.
 
@@ -14,20 +14,20 @@ Effortlessly create default instances from Zod schemas with intelligent type inf
 ## 📦 Installation
 
 ```bash
-npm install zod-default-instance
+npm install use-zod-default
 ```
 
 or
 
 ```bash
-yarn add zod-default-instance
+yarn add use-zod-default
 ```
 
 ## 🛠 Usage
 
 ```typescript
 import { z } from 'zod';
-import defaultInstance from 'zod-default-instance';
+import defaultInstance from 'use-zod-default';
 
 // Define your Zod schema
 const userSchema = z.object({

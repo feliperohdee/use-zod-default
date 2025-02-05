@@ -27,7 +27,9 @@ const defaultInstance = <T extends z.ZodSchema>(schema: T, source: any = {}): z.
 		}
 
 		if (schema instanceof z.ZodEffects) {
-			return getDefaultValue(schema.innerType());
+			const innerValue = getDefaultValue(schema.innerType());
+
+			return processEffect(schema, innerValue);
 		}
 
 		if (schema instanceof z.ZodEnum) {
@@ -52,7 +54,7 @@ const defaultInstance = <T extends z.ZodSchema>(schema: T, source: any = {}): z.
 
 		if (schema instanceof z.ZodNativeEnum) {
 			const keys = Object.keys(schema._def.values);
-			
+
 			return schema._def.values[keys[0]];
 		}
 
@@ -167,31 +169,55 @@ const defaultInstance = <T extends z.ZodSchema>(schema: T, source: any = {}): z.
 	};
 
 	const processValue = (schema: z.ZodTypeAny, value: any): any => {
+		if (schema instanceof z.ZodArray) {
+			return processArray(schema, value);
+		}
+
+		if (schema instanceof z.ZodBoolean) {
+			return typeof value === 'boolean' ? value : false;
+		}
+
+		if (schema instanceof z.ZodDiscriminatedUnion) {
+			return processDiscriminatedUnion(schema, value);
+		}
+
+		if (schema instanceof z.ZodEffects) {
+			return processEffect(schema, value);
+		}
+
+		if (schema instanceof z.ZodMap) {
+			return processMap(schema, value);
+		}
+
+		if (schema instanceof z.ZodNullable) {
+			return value === null ? null : processValue(schema.unwrap(), value);
+		}
+
+		if (schema instanceof z.ZodNumber || schema instanceof z.ZodBigInt) {
+			return typeof value === 'number' ? value : (schema.minValue ?? 0);
+		}
+
 		if (schema instanceof z.ZodObject) {
 			return processObject(schema, value);
-		} else if (schema instanceof z.ZodArray) {
-			return processArray(schema, value);
-		} else if (schema instanceof z.ZodDiscriminatedUnion) {
-			return processDiscriminatedUnion(schema, value);
-		} else if (schema instanceof z.ZodUnion) {
-			return processUnion(schema, value);
-		} else if (schema instanceof z.ZodBoolean) {
-			return typeof value === 'boolean' ? value : false;
-		} else if (schema instanceof z.ZodMap) {
-			return processMap(schema, value);
-		} else if (schema instanceof z.ZodNumber) {
-			return typeof value === 'number' ? value : (schema.minValue ?? 0);
-		} else if (schema instanceof z.ZodRecord) {
-			return processRecord(schema, value);
-		} else if (schema instanceof z.ZodSet) {
-			return processSet(schema, value);
-		} else if (schema instanceof z.ZodString) {
-			return typeof value === 'string' ? value : '';
-		} else if (schema instanceof z.ZodNullable) {
-			return value === null ? null : processValue(schema.unwrap(), value);
-		} else {
-			return value;
 		}
+
+		if (schema instanceof z.ZodRecord) {
+			return processRecord(schema, value);
+		}
+
+		if (schema instanceof z.ZodSet) {
+			return processSet(schema, value);
+		}
+
+		if (schema instanceof z.ZodString) {
+			return typeof value === 'string' ? value : '';
+		}
+
+		if (schema instanceof z.ZodUnion) {
+			return processUnion(schema, value);
+		}
+
+		return value;
 	};
 
 	const processMap = (schema: z.ZodMap<any, any>, source: any): any => {
@@ -252,6 +278,40 @@ const defaultInstance = <T extends z.ZodSchema>(schema: T, source: any = {}): z.
 		}
 
 		return result;
+	};
+
+	const processEffect = (schema: z.ZodEffects<any, any, any>, source: any): any => {
+		const { effect } = schema._def;
+		const ctx = {
+			addIssue: () => {},
+			get data() {
+				return source;
+			},
+			path: []
+		};
+
+		switch (effect.type) {
+			case 'preprocess':
+				if ('transform' in effect) {
+					try {
+						const preprocessed = effect.transform(source, ctx);
+
+						return processValue(schema.innerType(), preprocessed);
+					} catch {
+						return source;
+					}
+				}
+			case 'transform':
+				if ('transform' in effect) {
+					try {
+						return effect.transform(source, ctx);
+					} catch {
+						return source;
+					}
+				}
+		}
+
+		return source;
 	};
 
 	const processUnion = (schema: z.ZodUnion<[z.ZodTypeAny, ...z.ZodTypeAny[]]>, source: any): any => {

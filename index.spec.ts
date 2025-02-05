@@ -4,7 +4,7 @@ import { z } from 'zod';
 import zDefault from './index';
 
 describe('zDefault', () => {
-	describe('empty object', () => {		
+	describe('empty object', () => {
 		it('should handle empty object schema', () => {
 			const schema = z.object({});
 			const res = zDefault(schema);
@@ -275,6 +275,41 @@ describe('zDefault', () => {
 				field: { value: 0 }
 			});
 		});
+
+		it('should handle preprocess', () => {
+			const schema = z.object({
+				number: z.preprocess(val => Number(val) * 2, z.number().default(21))
+			});
+
+			const res = zDefault(schema);
+
+			expect(res).toEqual({ number: 42 });
+		});
+
+		it('should handle transform', () => {
+			const schema = z.object({
+				number: z
+					.string()
+					.default('42')
+					.transform(val => Number(val)),
+				uppercase: z
+					.string()
+					.default('a')
+					.transform(val => val.toUpperCase()),
+				complex: z
+					.number()
+					.default(21)
+					.transform(n => ({ value: n * 2 }))
+			});
+
+			const res = zDefault(schema);
+
+			expect(res).toEqual({
+				number: 42,
+				uppercase: 'A',
+				complex: { value: 42 }
+			});
+		});
 	});
 
 	describe('enum', () => {
@@ -452,6 +487,42 @@ describe('zDefault', () => {
 					{ id: 1, name: 'Item 1' },
 					{ id: 2, name: '' }
 				]
+			});
+		});
+
+		it('should handle preprocess effect', () => {
+			const schema = z.object({
+				number: z.preprocess(val => Number(val) * 2, z.number())
+			});
+
+			const source = {
+				number: '21'
+			};
+
+			const res = zDefault(schema, source);
+
+			expect(res).toEqual({ number: 42 });
+		});
+
+		it('should handle transform effect', () => {
+			const schema = z.object({
+				number: z.string().transform(val => Number(val)),
+				uppercase: z.string().transform(val => val.toUpperCase()),
+				complex: z.number().transform(n => ({ value: n * 2 }))
+			});
+
+			const source = {
+				number: '42',
+				uppercase: 'hello',
+				complex: 21
+			};
+
+			const res = zDefault(schema, source);
+
+			expect(res).toEqual({
+				number: 42,
+				uppercase: 'HELLO',
+				complex: { value: 42 }
 			});
 		});
 

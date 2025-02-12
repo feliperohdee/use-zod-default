@@ -551,7 +551,7 @@ describe('zDefault', () => {
 			const source = {
 				user: {
 					personal: { name: 'John' },
-					settings: { theme: 'dark' }
+					settings: { theme: 'dark' as const }
 				},
 				posts: [
 					{
@@ -675,6 +675,7 @@ describe('zDefault', () => {
 				void: undefined
 			};
 
+			// @ts-expect-error
 			const res = zDefault(schema, source);
 
 			expect(res).toEqual({
@@ -737,7 +738,7 @@ describe('zDefault', () => {
 
 			const successSource = {
 				res: {
-					status: 'success',
+					status: 'success' as const,
 					data: 'Some data',
 					extraField: 'should be removed'
 				}
@@ -745,7 +746,7 @@ describe('zDefault', () => {
 
 			const errorSource = {
 				res: {
-					status: 'error'
+					status: 'error' as const
 				}
 			};
 
@@ -758,6 +759,7 @@ describe('zDefault', () => {
 			const emptyRes = zDefault(schema);
 			const successRes = zDefault(schema, successSource);
 			const errorRes = zDefault(schema, errorSource);
+			// @ts-expect-error
 			const invalidRes = zDefault(schema, invalidSource);
 
 			expect(emptyRes).toEqual({
@@ -800,7 +802,7 @@ describe('zDefault', () => {
 
 			const stringSource = {
 				data: {
-					type: 'string',
+					type: 'string' as const,
 					value: 'test',
 					extraField: 'should be removed'
 				}
@@ -808,7 +810,7 @@ describe('zDefault', () => {
 
 			const numberSource = {
 				data: {
-					type: 'number',
+					type: 'number' as const,
 					value: 42
 				}
 			};
@@ -827,6 +829,7 @@ describe('zDefault', () => {
 			const stringRes = zDefault(schema, stringSource);
 			const numberRes = zDefault(schema, numberSource);
 			const directStringRes = zDefault(schema, directStringSource);
+			// @ts-expect-error
 			const invalidRes = zDefault(schema, invalidSource);
 
 			expect(emptyRes).toEqual({
@@ -882,13 +885,20 @@ describe('zDefault', () => {
 
 			const validSource1 = {
 				data: {
-					nested: { type: 'a', value: 'test', extra: 'remove' }
+					nested: {
+						type: 'a' as const,
+						value: 'test',
+						extra: 'remove'
+					}
 				}
 			};
 
 			const validSource2 = {
 				data: {
-					nested: { type: 'c', value: { deepNested: true, extra: 'remove' } }
+					nested: {
+						type: 'c' as const,
+						value: { deepNested: true, extra: 'remove' }
+					}
 				}
 			};
 
@@ -901,6 +911,7 @@ describe('zDefault', () => {
 			const emptyRes = zDefault(nestedSchema);
 			const res1 = zDefault(nestedSchema, validSource1);
 			const res2 = zDefault(nestedSchema, validSource2);
+			// @ts-expect-error
 			const invalidRes = zDefault(nestedSchema, invalidSource);
 
 			expect(emptyRes).toEqual({

@@ -1,6 +1,11 @@
 import { z } from 'zod';
 
-const defaultInstance = <T extends z.ZodSchema>(schema: T, source: any = {}): z.output<T> => {
+type DeepPartial<T> = T extends object ? { [P in keyof T]?: DeepPartial<T[P]> } : T;
+
+const defaultInstance = <T extends z.ZodSchema>(
+	schema: T,
+	source: DeepPartial<z.input<T>> = {} as DeepPartial<z.input<T>>
+): z.output<T> => {
 	const getDefaultValue = (schema: z.ZodTypeAny): any => {
 		if (schema instanceof z.ZodDefault) {
 			return schema._def.defaultValue();

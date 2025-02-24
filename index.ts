@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-type DeepPartial<T> = T extends object ? { [P in keyof T]?: DeepPartial<T[P]> } : T;
+type DeepPartial<T> = T extends (infer U)[] ? DeepPartial<U>[] : T extends object ? { [P in keyof T]?: DeepPartial<T[P]> } : T;
 
 const defaultInstance = <T extends z.ZodSchema>(
 	schema: T,

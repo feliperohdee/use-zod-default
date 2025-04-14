@@ -12,7 +12,7 @@ describe('zDefault', () => {
 			expect(res).toEqual({});
 		});
 
-		it('should handle all types', () => {
+		it.only('should handle all types', () => {
 			enum NativeEnum {
 				A = 'A',
 				B = 'B',

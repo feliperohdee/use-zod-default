@@ -30,7 +30,6 @@ describe('zDefault', () => {
 					z.object({ type: z.literal('b'), value: z.number() })
 				]),
 				enum: z.enum(['A', 'B', 'C']),
-				function: z.function(),
 				instanceof: z.instanceof(Date),
 				intersection: z.intersection(z.string(), z.number()),
 				map: z.map(z.string(), z.string()),
@@ -44,7 +43,7 @@ describe('zDefault', () => {
 					key: z.string()
 				}),
 				promise: z.promise(z.string()),
-				record: z.record(z.string()),
+				record: z.record(z.string(), z.string()),
 				set: z.set(z.string()),
 				string: z.string(),
 				optional: z.string().optional(),
@@ -65,7 +64,6 @@ describe('zDefault', () => {
 				default: 'default',
 				discriminatedUnion: { type: 'a', value: '' },
 				enum: 'A',
-				function: expect.any(Function),
 				instanceof: undefined,
 				intersection: '',
 				map: new Map(),

@@ -346,16 +346,12 @@ const defaultInstance = <T extends z.ZodType>(schema: T, source: DeepPartial<z.i
 		return processDiscriminatedUnion(schema, source);
 	}
 
-	if (schema instanceof z.ZodTransform) {
-		return processTransform(schema, source);
-	}
-
 	if (schema instanceof z.ZodPipe) {
 		if (schema._zod.def.out instanceof z.ZodTransform) {
 			return processTransform(schema._zod.def.out, source);
 		}
 
-		return processValue(cast(schema._zod.def.out), source);
+		return processValue(cast(schema._zod.def.in), source);
 	}
 
 	return processValue(schema, source);

@@ -339,11 +339,15 @@ describe('zDefault', () => {
 				number: z
 					.string()
 					.default('42')
-					.transform(val => Number(val)),
+					.transform(val => {
+						return Number(val);
+					}),
 				uppercase: z
 					.string()
 					.default('a')
-					.transform(val => val.toUpperCase())
+					.transform(val => {
+						return val.toUpperCase();
+					})
 			});
 
 			const res = zDefault(schema);
@@ -508,36 +512,48 @@ describe('zDefault', () => {
 			});
 		});
 
-		it('should handle preprocess effect', () => {
-			const schema = z.object({
-				number: z.preprocess(val => Number(val) * 2, z.number())
+		it('should handle preprocess', () => {
+			const numberSchema = z.preprocess(val => {
+				return Number(val) * 2;
+			}, z.number());
+
+			const schemaObject = z.object({
+				number: numberSchema
 			});
 
-			const source = {
+			const resNumber = zDefault(numberSchema, '21');
+			const resObject = zDefault(schemaObject, {
 				number: '21'
-			};
+			});
 
-			const res = zDefault(schema, source);
-
-			expect(res).toEqual({ number: 42 });
+			expect(resNumber).toEqual(42);
+			expect(resObject).toEqual({ number: 42 });
 		});
 
-		it('should handle transform effect', () => {
-			const schema = z.object({
-				number: z.string().transform(val => Number(val)),
-				uppercase: z.string().transform(val => val.toUpperCase()),
-				complex: z.number().transform(n => ({ value: n * 2 }))
+		it('should handle transform', () => {
+			const numberSchema = z.string().transform(val => {
+				return Number(val);
 			});
 
-			const source = {
+			const objectSchema = z.object({
+				number: numberSchema,
+				uppercase: z.string().transform(val => {
+					return val.toUpperCase();
+				}),
+				complex: z.number().transform(n => {
+					return { value: n * 2 };
+				})
+			});
+
+			const resNumber = zDefault(numberSchema, '42');
+			const resObject = zDefault(objectSchema, {
 				number: '42',
 				uppercase: 'hello',
 				complex: 21
-			};
+			});
 
-			const res = zDefault(schema, source);
-
-			expect(res).toEqual({
+			expect(resNumber).toEqual(42);
+			expect(resObject).toEqual({
 				number: 42,
 				uppercase: 'HELLO',
 				complex: { value: 42 }

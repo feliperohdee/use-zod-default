@@ -2,8 +2,12 @@ import { z } from 'zod';
 
 type DeepPartial<T> = T extends (infer U)[] ? DeepPartial<U>[] : T extends object ? { [P in keyof T]?: DeepPartial<T[P]> } : T;
 
+const cast = (schema: any): z.ZodType => {
+	return schema as z.ZodType;
+};
+
 const defaultInstance = <T extends z.ZodType>(schema: T, source: DeepPartial<z.input<T>> = {} as DeepPartial<z.input<T>>): z.output<T> => {
-	const getDefaultValue = (schema: z.ZodType): any => {
+	const getDefaultValue = (schema: z.ZodType, defaultValue?: any): any => {
 		if (schema instanceof z.ZodDefault) {
 			return schema._zod.def.defaultValue();
 		}
@@ -25,32 +29,17 @@ const defaultInstance = <T extends z.ZodType>(schema: T, source: DeepPartial<z.i
 		}
 
 		if (schema instanceof z.ZodDiscriminatedUnion) {
-			return defaultInstance(schema._zod.def.options[0]);
-		}
+			const firstOption = schema._zod.def.options[0];
 
-		if (schema instanceof z.ZodTransform) {
-			const innerValue = getDefaultValue(schema._zod.def.in || schema);
-			try {
-				return schema._zod.def.transform(innerValue, {
-					value: innerValue,
-					issues: [],
-					addIssue: () => {}
-				});
-			} catch {
-				return innerValue;
-			}
+			return defaultInstance(cast(firstOption));
 		}
 
 		if (schema instanceof z.ZodEnum) {
 			return schema._zod.values.values().next().value;
 		}
 
-		if (schema._zod?.def?.type === 'function') {
-			return () => null;
-		}
-
 		if (schema instanceof z.ZodIntersection) {
-			return defaultInstance(schema._zod.def.left, source);
+			return defaultInstance(cast(schema._zod.def.left), source);
 		}
 
 		if (schema instanceof z.ZodLiteral) {
@@ -59,13 +48,6 @@ const defaultInstance = <T extends z.ZodType>(schema: T, source: DeepPartial<z.i
 
 		if (schema instanceof z.ZodMap) {
 			return new Map();
-		}
-
-		// Handle enum in Zod 4 (both native and string enums use ZodEnum)
-		if (schema._zod?.def?.entries) {
-			const entries = schema._zod.def.entries;
-			const keys = Object.keys(entries);
-			return entries[keys[0]];
 		}
 
 		if (schema instanceof z.ZodNaN) {
@@ -93,11 +75,17 @@ const defaultInstance = <T extends z.ZodType>(schema: T, source: DeepPartial<z.i
 		}
 
 		if (schema instanceof z.ZodPipe) {
-			return getDefaultValue(schema._zod.def.out);
+			if (schema._zod.def.out instanceof z.ZodTransform) {
+				const defaultInValue = getDefaultValue(cast(schema._zod.def.in));
+
+				return getDefaultValue(cast(schema._zod.def.out), defaultInValue);
+			}
+
+			return getDefaultValue(cast(schema._zod.def.in), getDefaultValue(cast(schema._zod.def.out)));
 		}
 
 		if (schema instanceof z.ZodPromise) {
-			return Promise.resolve(getDefaultValue(schema._zod.def.innerType));
+			return Promise.resolve(getDefaultValue(cast(schema._zod.def.innerType)));
 		}
 
 		if (schema instanceof z.ZodRecord) {
@@ -116,12 +104,23 @@ const defaultInstance = <T extends z.ZodType>(schema: T, source: DeepPartial<z.i
 			return '';
 		}
 
+		if (schema instanceof z.ZodTransform) {
+			try {
+				return schema._zod.def.transform(defaultValue, {
+					value: defaultValue,
+					issues: []
+				});
+			} catch {
+				return defaultValue;
+			}
+		}
+
 		if (schema instanceof z.ZodTuple) {
 			return [];
 		}
 
 		if (schema instanceof z.ZodUnion) {
-			return getDefaultValue(schema._zod.def.options[0]);
+			return getDefaultValue(cast(schema._zod.def.options[0]));
 		}
 
 		if (schema instanceof z.ZodUnknown) {
@@ -136,8 +135,8 @@ const defaultInstance = <T extends z.ZodType>(schema: T, source: DeepPartial<z.i
 			return undefined;
 		}
 
-		if (schema._zod?.def?.innerType) {
-			return getDefaultValue(schema._zod.def.innerType);
+		if ('innerType' in schema._zod?.def && schema._zod?.def.innerType) {
+			return getDefaultValue(cast(schema._zod.def.innerType));
 		}
 
 		return undefined;
@@ -155,7 +154,7 @@ const defaultInstance = <T extends z.ZodType>(schema: T, source: DeepPartial<z.i
 		});
 	};
 
-	const processDiscriminatedUnion = (schema: z.ZodDiscriminatedUnion<any, any>, source: any): any => {
+	const processDiscriminatedUnion = (schema: z.ZodDiscriminatedUnion, source: any): any => {
 		if (typeof source !== 'object' || source === null) {
 			return getDefaultValue(schema);
 		}
@@ -187,11 +186,13 @@ const defaultInstance = <T extends z.ZodType>(schema: T, source: DeepPartial<z.i
 		});
 
 		if (!matchingSchema) {
+			const firstOption = schema._zod.def.options[0];
+
 			// If no matching schema is found, use the first option as default
-			return processObject(schema._zod.def.options[0], source);
+			return processObject(firstOption as z.ZodObject, source);
 		}
 
-		return processObject(matchingSchema, source);
+		return processObject(matchingSchema as z.ZodObject, source);
 	};
 
 	const processValue = (schema: z.ZodType, value: any): any => {
@@ -207,16 +208,12 @@ const defaultInstance = <T extends z.ZodType>(schema: T, source: DeepPartial<z.i
 			return processDiscriminatedUnion(schema, value);
 		}
 
-		if (schema instanceof z.ZodTransform) {
-			return processTransform(schema, value);
-		}
-
 		if (schema instanceof z.ZodMap) {
 			return processMap(schema, value);
 		}
 
 		if (schema instanceof z.ZodNullable) {
-			return value === null ? null : processValue(schema._zod.def.innerType, value);
+			return value === null ? null : processValue(cast(schema._zod.def.innerType), value);
 		}
 
 		if (schema instanceof z.ZodNumber || schema instanceof z.ZodBigInt) {
@@ -228,8 +225,11 @@ const defaultInstance = <T extends z.ZodType>(schema: T, source: DeepPartial<z.i
 		}
 
 		if (schema instanceof z.ZodPipe) {
-			const inValue = processValue(schema._zod.def.in, value);
-			return processValue(schema._zod.def.out, inValue);
+			if (schema._zod.def.out instanceof z.ZodTransform) {
+				return processTransform(schema._zod.def.out, value);
+			}
+
+			return processValue(cast(schema._zod.def.in), value);
 		}
 
 		if (schema instanceof z.ZodRecord) {
@@ -244,24 +244,15 @@ const defaultInstance = <T extends z.ZodType>(schema: T, source: DeepPartial<z.i
 			return typeof value === 'string' ? value : '';
 		}
 
+		if (schema instanceof z.ZodTransform) {
+			return processTransform(schema, value);
+		}
+
 		if (schema instanceof z.ZodUnion) {
 			return processUnion(schema, value);
 		}
 
 		return value;
-	};
-
-	const processTransform = (schema: z.ZodTransform<any, any>, source: any): any => {
-		try {
-			const input = schema._zod.def.in ? processValue(schema._zod.def.in, source) : source;
-			return schema._zod.def.transform(input, {
-				value: input,
-				issues: [],
-				addIssue: () => {}
-			});
-		} catch {
-			return source;
-		}
 	};
 
 	const processMap = (schema: z.ZodMap<any, any>, source: any): any => {
@@ -273,7 +264,7 @@ const defaultInstance = <T extends z.ZodType>(schema: T, source: DeepPartial<z.i
 		const result: any = new Map();
 
 		source.forEach((value, key) => {
-			result.set(key, processValue(valueSchema, value));
+			result.set(key, processValue(cast(valueSchema), value));
 		});
 
 		return result;
@@ -285,9 +276,9 @@ const defaultInstance = <T extends z.ZodType>(schema: T, source: DeepPartial<z.i
 
 		for (const [key, fieldSchema] of Object.entries(shape)) {
 			if (source && key in source) {
-				result[key] = processValue(fieldSchema as z.ZodType, source[key]);
+				result[key] = processValue(cast(fieldSchema), source[key]);
 			} else {
-				result[key] = getDefaultValue(fieldSchema as z.ZodType);
+				result[key] = getDefaultValue(cast(fieldSchema));
 			}
 		}
 
@@ -303,7 +294,7 @@ const defaultInstance = <T extends z.ZodType>(schema: T, source: DeepPartial<z.i
 		const result: any = {};
 
 		for (const key in source) {
-			result[key] = processValue(valueSchema, source[key]);
+			result[key] = processValue(cast(valueSchema), source[key]);
 		}
 
 		return result;
@@ -318,10 +309,21 @@ const defaultInstance = <T extends z.ZodType>(schema: T, source: DeepPartial<z.i
 		const result: any = new Set();
 
 		for (const value of source) {
-			result.add(processValue(valueSchema, value));
+			result.add(processValue(cast(valueSchema), value));
 		}
 
 		return result;
+	};
+
+	const processTransform = (schema: z.ZodTransform<any, any>, source: any): any => {
+		try {
+			return schema._zod.def.transform(source, {
+				value: source,
+				issues: []
+			});
+		} catch {
+			return source;
+		}
 	};
 
 	const processUnion = (schema: z.ZodUnion<any>, source: any): any => {
@@ -349,8 +351,11 @@ const defaultInstance = <T extends z.ZodType>(schema: T, source: DeepPartial<z.i
 	}
 
 	if (schema instanceof z.ZodPipe) {
-		const inValue = processValue(schema._zod.def.in, source);
-		return processValue(schema._zod.def.out, inValue);
+		if (schema._zod.def.out instanceof z.ZodTransform) {
+			return processTransform(schema._zod.def.out, source);
+		}
+
+		return processValue(cast(schema._zod.def.out), source);
 	}
 
 	return processValue(schema, source);

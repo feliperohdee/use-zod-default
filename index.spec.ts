@@ -12,13 +12,7 @@ describe('zDefault', () => {
 			expect(res).toEqual({});
 		});
 
-		it.only('should handle all types', () => {
-			enum NativeEnum {
-				A = 'A',
-				B = 'B',
-				C = 'C'
-			}
-
+		it('should handle all types', () => {
 			const schema = z.object({
 				any: z.any(),
 				bigint: z.bigint(),
@@ -31,10 +25,13 @@ describe('zDefault', () => {
 				]),
 				enum: z.enum(['A', 'B', 'C']),
 				instanceof: z.instanceof(Date),
+				interface: z.interface({
+					key: z.string(),
+					'optional?': z.string()
+				}),
 				intersection: z.intersection(z.string(), z.number()),
 				map: z.map(z.string(), z.string()),
 				nan: z.nan(),
-				nativeEnum: z.nativeEnum(NativeEnum),
 				never: z.never(),
 				null: z.null(),
 				nullable: z.string().nullable(),
@@ -65,10 +62,10 @@ describe('zDefault', () => {
 				discriminatedUnion: { type: 'a', value: '' },
 				enum: 'A',
 				instanceof: undefined,
+				interface: { key: '', optional: '' },
 				intersection: '',
 				map: new Map(),
 				nan: NaN,
-				nativeEnum: 'A',
 				never: undefined,
 				null: null,
 				nullable: null,
@@ -86,6 +83,7 @@ describe('zDefault', () => {
 				void: undefined
 			});
 		});
+
 		it('should handle nested objects', () => {
 			const schema = z.object({
 				user: z.object({
@@ -225,91 +223,6 @@ describe('zDefault', () => {
 		});
 	});
 
-	describe('effects', () => {
-		it('should handle ZodEffects', () => {
-			const schema = z
-				.object({
-					name: z.string(),
-					age: z.number()
-				})
-				.refine(
-					data => {
-						return data.age >= 18;
-					},
-					{
-						message: 'Must be 18 or older',
-						path: ['age']
-					}
-				);
-
-			const res = zDefault(schema);
-
-			expect(res).toEqual({
-				name: '',
-				age: 0
-			});
-		});
-
-		it('should handle nested ZodEffects', () => {
-			const innerSchema = z
-				.object({
-					value: z.number()
-				})
-				.refine(data => {
-					return data.value > 0;
-				});
-
-			const outerSchema = z
-				.object({
-					field: innerSchema
-				})
-				.refine(data => {
-					return data.field.value < 100;
-				});
-
-			const res = zDefault(outerSchema);
-
-			expect(res).toEqual({
-				field: { value: 0 }
-			});
-		});
-
-		it('should handle preprocess', () => {
-			const schema = z.object({
-				number: z.preprocess(val => Number(val) * 2, z.number().default(21))
-			});
-
-			const res = zDefault(schema);
-
-			expect(res).toEqual({ number: 42 });
-		});
-
-		it('should handle transform', () => {
-			const schema = z.object({
-				number: z
-					.string()
-					.default('42')
-					.transform(val => Number(val)),
-				uppercase: z
-					.string()
-					.default('a')
-					.transform(val => val.toUpperCase()),
-				complex: z
-					.number()
-					.default(21)
-					.transform(n => ({ value: n * 2 }))
-			});
-
-			const res = zDefault(schema);
-
-			expect(res).toEqual({
-				number: 42,
-				uppercase: 'A',
-				complex: { value: 42 }
-			});
-		});
-	});
-
 	describe('enum', () => {
 		it('should handle with multiple enums', () => {
 			const colorEnum = z.enum(['red', 'green', 'blue']);
@@ -324,6 +237,25 @@ describe('zDefault', () => {
 			expect(res).toEqual({
 				color: 'red',
 				size: 'small'
+			});
+		});
+	});
+
+	describe('interface', () => {
+		it('should handle interface', () => {
+			const schema = z.interface({
+				interface: z.interface({
+					key: z.string(),
+					'optional?': z.string()
+				})
+			});
+			const res = zDefault(schema);
+
+			expect(res).toEqual({
+				interface: {
+					key: '',
+					optional: ''
+				}
 			});
 		});
 	});
@@ -385,24 +317,108 @@ describe('zDefault', () => {
 		});
 	});
 
-	describe('pipeline', () => {
-		it('should handle pipeline', () => {
+	describe('preprocess / transform', () => {
+		it('should handle preprocess', () => {
 			const schema = z.object({
-				pipeline: z.pipeline(z.string(), z.string())
+				number: z.preprocess(val => {
+					return Number(val) * 2;
+				}, z.number().default(21))
 			});
+
 			const res = zDefault(schema);
 
-			expect(res).toEqual({ pipeline: '' });
+			expect(res).toEqual({ number: 42 });
+		});
+
+		it('should handle transform', () => {
+			const schema = z.object({
+				complex: z
+					.number()
+					.default(21)
+					.transform(n => ({ value: n * 2 })),
+				number: z
+					.string()
+					.default('42')
+					.transform(val => Number(val)),
+				uppercase: z
+					.string()
+					.default('a')
+					.transform(val => val.toUpperCase())
+			});
+
+			const res = zDefault(schema);
+
+			expect(res).toEqual({
+				complex: { value: 42 },
+				number: 42,
+				uppercase: 'A'
+			});
+		});
+	});
+
+	describe('refinements', () => {
+		it('should handle refinements', () => {
+			const schema = z
+				.object({
+					name: z.string(),
+					age: z.number()
+				})
+				.refine(
+					data => {
+						return data.age >= 18;
+					},
+					{
+						message: 'Must be 18 or older',
+						path: ['age']
+					}
+				);
+
+			const res = zDefault(schema);
+
+			expect(res).toEqual({
+				name: '',
+				age: 0
+			});
+		});
+
+		it('should handle nested refinements', () => {
+			const innerSchema = z
+				.object({
+					value: z.number()
+				})
+				.refine(data => {
+					return data.value > 0;
+				});
+
+			const outerSchema = z
+				.object({
+					field: innerSchema
+				})
+				.refine(data => {
+					return data.field.value < 100;
+				});
+
+			const res = zDefault(outerSchema);
+
+			expect(res).toEqual({
+				field: { value: 0 }
+			});
 		});
 	});
 
 	describe('record', () => {
 		it('should handle record', () => {
 			const schema = z.object({
-				dictionary: z.record(z.string())
+				mixed: z.record(z.string(), z.union([z.string(), z.number()])),
+				string: z.record(z.string(), z.string())
 			});
+
 			const source = {
-				dictionary: {
+				mixed: {
+					key1: 'value1',
+					key2: 2
+				},
+				string: {
 					key1: 'value1',
 					key2: 'value2'
 				}
@@ -411,7 +427,11 @@ describe('zDefault', () => {
 			const res = zDefault(schema, source);
 
 			expect(res).toEqual({
-				dictionary: {
+				mixed: {
+					key1: 'value1',
+					key2: 2
+				},
+				string: {
 					key1: 'value1',
 					key2: 'value2'
 				}
@@ -578,12 +598,6 @@ describe('zDefault', () => {
 		});
 
 		it('should handle all types', () => {
-			enum NativeEnum {
-				A = 'A',
-				B = 'B',
-				C = 'C'
-			}
-
 			const symbol = Symbol('symbol');
 			const schema = z.object({
 				any: z.any(),
@@ -600,12 +614,14 @@ describe('zDefault', () => {
 				date: z.date(),
 				default: z.string().default('default'),
 				enum: z.enum(['A', 'B', 'C']),
-				function: z.function(),
 				instanceof: z.instanceof(Date),
+				interface: z.interface({
+					key: z.string(),
+					'optional?': z.string()
+				}),
 				intersection: z.intersection(z.string(), z.number()),
 				map: z.map(z.string(), z.string()),
 				nan: z.nan(),
-				nativeEnum: z.nativeEnum(NativeEnum),
 				never: z.never(),
 				null: z.null(),
 				nullable: z.string().nullable(),
@@ -617,7 +633,7 @@ describe('zDefault', () => {
 				}),
 				optional: z.string().optional(),
 				promise: z.promise(z.string()),
-				record: z.record(z.string()),
+				record: z.record(z.string(), z.union([z.string(), z.number()])),
 				string: z.string(),
 				stringSet: z.set(z.string()),
 				stringUndefined: z.string(),
@@ -644,12 +660,11 @@ describe('zDefault', () => {
 				default: 'overridden',
 				enum: 'B',
 				forbidden: 'forbidden',
-				function: () => null,
 				instanceof: new Date('2023-01-01'),
+				interface: { key: 'source key', optional: 'provided' },
 				intersection: 42,
 				map: new Map([['key', 'value']]),
 				nan: NaN,
-				nativeEnum: 'B',
 				never: undefined,
 				null: null,
 				nullable: null,
@@ -691,12 +706,11 @@ describe('zDefault', () => {
 				date: new Date('2023-01-01'),
 				default: 'overridden',
 				enum: 'B',
-				function: expect.any(Function),
 				instanceof: new Date('2023-01-01'),
+				interface: { key: 'source key', optional: 'provided' },
 				intersection: 42,
 				map: new Map([['key', 'value']]),
 				nan: NaN,
-				nativeEnum: 'B',
 				never: undefined,
 				null: null,
 				nullable: null,
@@ -708,7 +722,7 @@ describe('zDefault', () => {
 				},
 				optional: 'provided',
 				promise: Promise.resolve('promise'),
-				record: { number: '', string: 'value' },
+				record: { number: 42, string: 'value' },
 				string: 'source string',
 				stringSet: new Set(['value']),
 				stringUndefined: '',

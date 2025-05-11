@@ -21,7 +21,7 @@
 		"url": "https://github.com/feliperohdee/use-zod-default"
 	},
 	"scripts": {
-		"build": "rm -rf dist && tsc -p tsconfig.json",
+		"build": "rm -rf dist && yarn lint && tsc -p tsconfig.json",
 		"lint": "prettier --write . && yarn tsc",
 		"npm-publish": "yarn test --run && yarn build && yarn version --patch --no-git-tag-version && yarn publish --non-interactive",
 		"test": "vitest",

@@ -122,18 +122,22 @@ describe('zDefault', () => {
 		});
 
 		it('should handle default values', () => {
+			const emptyObject = {};
 			const schema = z.object({
 				age: z.number().default(30),
 				map: z.map(z.string(), z.string()).default(new Map([['key', 'value']])),
+				object: z.object({}).default(emptyObject),
 				name: z.string().default('John'),
 				set: z.set(z.string()).default(new Set(['value']))
 			});
 
 			const res = zDefault(schema);
 
+			expect(res.object).not.toBe(emptyObject);
 			expect(res).toEqual({
 				age: 30,
 				map: new Map([['key', 'value']]),
+				object: {},
 				name: 'John',
 				set: new Set(['value'])
 			});

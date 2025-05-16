@@ -1,3 +1,4 @@
+import cloneDeep from 'lodash/cloneDeep';
 import { z } from 'zod';
 
 type DeepPartial<T> = T extends (infer U)[] ? DeepPartial<U>[] : T extends object ? { [P in keyof T]?: DeepPartial<T[P]> } : T;
@@ -8,7 +9,9 @@ const defaultInstance = <T extends z.ZodSchema>(
 ): z.output<T> => {
 	const getDefaultValue = (schema: z.ZodTypeAny): any => {
 		if (schema instanceof z.ZodDefault) {
-			return schema._def.defaultValue();
+			const d = schema._def.defaultValue();
+
+			return cloneDeep(d);
 		}
 
 		if (schema instanceof z.ZodAny) {

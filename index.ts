@@ -198,6 +198,10 @@ const defaultInstance = <T extends z.ZodSchema>(
 			return processEffect(schema, value);
 		}
 
+		if (schema instanceof z.ZodDefault) {
+			return processValue(schema._def.innerType, value);
+		}
+
 		if (schema instanceof z.ZodMap) {
 			return processMap(schema, value);
 		}

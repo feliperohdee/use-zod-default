@@ -30,5 +30,5 @@
 		"test": "vitest",
 		"test:coverage": "rm -rf coverage && vitest --run --coverage"
 	},
-	"version": "1.0.12"
+	"version": "1.0.13"
 }

@@ -532,6 +532,23 @@ describe('zDefault', () => {
 
 		it('should handle deeply nested objects', () => {
 			const schema = z.object({
+				objectWithDefault: z
+					.object({
+						prop1: z.string(),
+						prop2: z.number()
+					})
+					.default({
+						prop1: 'default',
+						prop2: 20
+					}),
+				posts: z.array(
+					z.object({
+						content: z.string(),
+						tags: z.array(z.string()),
+						title: z.string(),
+						subtitle: z.string().default('subtitle')
+					})
+				),
 				user: z.object({
 					personal: z.object({
 						name: z.string(),
@@ -541,36 +558,31 @@ describe('zDefault', () => {
 						theme: z.enum(['light', 'dark']),
 						notifications: z.boolean()
 					})
-				}),
-				posts: z.array(
-					z.object({
-						content: z.string(),
-						tags: z.array(z.string()),
-						title: z.string(),
-						subtitle: z.string().default('subtitle')
-					})
-				)
+				})
 			});
 
 			const source = {
-				user: {
-					personal: { name: 'John' },
-					settings: { theme: 'dark' as const }
+				objectWithDefault: {
+					prop1: 'default2'
 				},
 				posts: [
 					{
 						title: 'Hello',
 						tags: ['greeting']
 					}
-				]
+				],
+				user: {
+					personal: { name: 'John' },
+					settings: { theme: 'dark' as const }
+				}
 			};
 
 			const res = zDefault(schema, source);
 
 			expect(res).toEqual({
-				user: {
-					personal: { name: 'John', age: 0 },
-					settings: { theme: 'dark', notifications: false }
+				objectWithDefault: {
+					prop1: 'default2',
+					prop2: 0
 				},
 				posts: [
 					{
@@ -579,7 +591,11 @@ describe('zDefault', () => {
 						title: 'Hello',
 						subtitle: 'subtitle'
 					}
-				]
+				],
+				user: {
+					personal: { name: 'John', age: 0 },
+					settings: { theme: 'dark', notifications: false }
+				}
 			});
 		});
 

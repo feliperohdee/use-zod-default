@@ -637,6 +637,11 @@ describe('zDefault', () => {
 				object: z.object({
 					key: z.string()
 				}),
+				objectWithPassthrough: z
+					.object({
+						key1: z.string()
+					})
+					.passthrough(),
 				optional: z.string().optional(),
 				promise: z.promise(z.string()),
 				record: z.record(z.string()),
@@ -681,6 +686,10 @@ describe('zDefault', () => {
 				object: {
 					forbidden: 'forbidden',
 					key: 'source key'
+				},
+				objectWithPassthrough: {
+					key1: 'key1',
+					key2: 'key2'
 				},
 				optional: 'provided',
 				promise: Promise.resolve('promise'),
@@ -727,6 +736,10 @@ describe('zDefault', () => {
 				numberSet: new Set([42]),
 				object: {
 					key: 'source key'
+				},
+				objectWithPassthrough: {
+					key1: 'key1',
+					key2: 'key2'
 				},
 				optional: 'provided',
 				promise: Promise.resolve('promise'),

@@ -256,11 +256,21 @@ const defaultInstance = <T extends z.ZodSchema>(
 		const result: any = {};
 		const shape = schema.shape;
 
+		// Process defined schema properties
 		for (const [key, fieldSchema] of Object.entries(shape)) {
 			if (key in source) {
 				result[key] = processValue(fieldSchema as z.ZodTypeAny, source[key]);
 			} else {
 				result[key] = getDefaultValue(fieldSchema as z.ZodTypeAny);
+			}
+		}
+
+		// Handle passthrough - preserve additional properties not in schema
+		if (schema._def.unknownKeys === 'passthrough' && isPlainObject(source)) {
+			for (const key in source) {
+				if (!(key in shape)) {
+					result[key] = source[key];
+				}
 			}
 		}
 

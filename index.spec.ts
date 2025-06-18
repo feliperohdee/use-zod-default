@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 
 import zDefault from './index';
 
@@ -25,10 +25,6 @@ describe('zDefault', () => {
 				]),
 				enum: z.enum(['A', 'B', 'C']),
 				instanceof: z.instanceof(Date),
-				interface: z.interface({
-					key: z.string(),
-					'optional?': z.string()
-				}),
 				intersection: z.intersection(z.string(), z.number()),
 				map: z.map(z.string(), z.string()),
 				nan: z.nan(),
@@ -62,7 +58,6 @@ describe('zDefault', () => {
 				discriminatedUnion: { type: 'a', value: '' },
 				enum: 'A',
 				instanceof: undefined,
-				interface: { key: '', optional: '' },
 				intersection: '',
 				map: new Map(),
 				nan: NaN,
@@ -118,18 +113,22 @@ describe('zDefault', () => {
 		});
 
 		it('should handle default values', () => {
+			const emptyObject = {};
 			const schema = z.object({
 				age: z.number().default(30),
 				map: z.map(z.string(), z.string()).default(new Map([['key', 'value']])),
+				object: z.object({}).default(emptyObject),
 				name: z.string().default('John'),
 				set: z.set(z.string()).default(new Set(['value']))
 			});
 
 			const res = zDefault(schema);
 
+			expect(res.object).not.toBe(emptyObject);
 			expect(res).toEqual({
 				age: 30,
 				map: new Map([['key', 'value']]),
+				object: {},
 				name: 'John',
 				set: new Set(['value'])
 			});
@@ -241,25 +240,6 @@ describe('zDefault', () => {
 		});
 	});
 
-	describe('interface', () => {
-		it('should handle interface', () => {
-			const schema = z.interface({
-				interface: z.interface({
-					key: z.string(),
-					'optional?': z.string()
-				})
-			});
-			const res = zDefault(schema);
-
-			expect(res).toEqual({
-				interface: {
-					key: '',
-					optional: ''
-				}
-			});
-		});
-	});
-
 	describe('literal', () => {
 		it('should handle literal', () => {
 			const schema = z.object({
@@ -301,6 +281,15 @@ describe('zDefault', () => {
 			const res = zDefault(schema);
 
 			expect(res).toEqual({ number: 0 });
+		});
+
+		it('should handle minimum number', () => {
+			const schema = z.object({
+				number: z.number().min(10)
+			});
+			const res = zDefault(schema);
+
+			expect(res).toEqual({ number: 10 });
 		});
 	});
 
@@ -562,6 +551,23 @@ describe('zDefault', () => {
 
 		it('should handle deeply nested objects', () => {
 			const schema = z.object({
+				objectWithDefault: z
+					.object({
+						prop1: z.string(),
+						prop2: z.number()
+					})
+					.default({
+						prop1: 'default',
+						prop2: 20
+					}),
+				posts: z.array(
+					z.object({
+						content: z.string(),
+						tags: z.array(z.string()),
+						title: z.string(),
+						subtitle: z.string().default('subtitle')
+					})
+				),
 				user: z.object({
 					personal: z.object({
 						name: z.string(),
@@ -571,36 +577,31 @@ describe('zDefault', () => {
 						theme: z.enum(['light', 'dark']),
 						notifications: z.boolean()
 					})
-				}),
-				posts: z.array(
-					z.object({
-						content: z.string(),
-						tags: z.array(z.string()),
-						title: z.string(),
-						subtitle: z.string().default('subtitle')
-					})
-				)
+				})
 			});
 
 			const source = {
-				user: {
-					personal: { name: 'John' },
-					settings: { theme: 'dark' as const }
+				objectWithDefault: {
+					prop1: 'default2'
 				},
 				posts: [
 					{
 						title: 'Hello',
 						tags: ['greeting']
 					}
-				]
+				],
+				user: {
+					personal: { name: 'John' },
+					settings: { theme: 'dark' as const }
+				}
 			};
 
 			const res = zDefault(schema, source);
 
 			expect(res).toEqual({
-				user: {
-					personal: { name: 'John', age: 0 },
-					settings: { theme: 'dark', notifications: false }
+				objectWithDefault: {
+					prop1: 'default2',
+					prop2: 0
 				},
 				posts: [
 					{
@@ -609,7 +610,11 @@ describe('zDefault', () => {
 						title: 'Hello',
 						subtitle: 'subtitle'
 					}
-				]
+				],
+				user: {
+					personal: { name: 'John', age: 0 },
+					settings: { theme: 'dark', notifications: false }
+				}
 			});
 		});
 
@@ -631,10 +636,6 @@ describe('zDefault', () => {
 				default: z.string().default('default'),
 				enum: z.enum(['A', 'B', 'C']),
 				instanceof: z.instanceof(Date),
-				interface: z.interface({
-					key: z.string(),
-					'optional?': z.string()
-				}),
 				intersection: z.intersection(z.string(), z.number()),
 				map: z.map(z.string(), z.string()),
 				nan: z.nan(),
@@ -647,6 +648,11 @@ describe('zDefault', () => {
 				object: z.object({
 					key: z.string()
 				}),
+				objectLoose: z
+					.object({
+						key1: z.string()
+					})
+					.loose(),
 				optional: z.string().optional(),
 				promise: z.promise(z.string()),
 				record: z.record(z.string(), z.union([z.string(), z.number()])),
@@ -677,7 +683,6 @@ describe('zDefault', () => {
 				enum: 'B',
 				forbidden: 'forbidden',
 				instanceof: new Date('2023-01-01'),
-				interface: { key: 'source key', optional: 'provided' },
 				intersection: 42,
 				map: new Map([['key', 'value']]),
 				nan: NaN,
@@ -690,6 +695,10 @@ describe('zDefault', () => {
 				object: {
 					forbidden: 'forbidden',
 					key: 'source key'
+				},
+				objectLoose: {
+					key1: 'key1',
+					key2: 'key2'
 				},
 				optional: 'provided',
 				promise: Promise.resolve('promise'),
@@ -723,7 +732,6 @@ describe('zDefault', () => {
 				default: 'overridden',
 				enum: 'B',
 				instanceof: new Date('2023-01-01'),
-				interface: { key: 'source key', optional: 'provided' },
 				intersection: 42,
 				map: new Map([['key', 'value']]),
 				nan: NaN,
@@ -735,6 +743,10 @@ describe('zDefault', () => {
 				numberSet: new Set([42]),
 				object: {
 					key: 'source key'
+				},
+				objectLoose: {
+					key1: 'key1',
+					key2: 'key2'
 				},
 				optional: 'provided',
 				promise: Promise.resolve('promise'),

@@ -1,4 +1,10 @@
-import { z } from 'zod';
+import { z } from 'zod/v4';
+import cloneDeep from 'lodash/cloneDeep';
+import isBoolean from 'lodash/isBoolean';
+import isNumber from 'lodash/isNumber';
+import isNil from 'lodash/isNil';
+import isPlainObject from 'lodash/isPlainObject';
+import isString from 'lodash/isString';
 
 type DeepPartial<T> = T extends (infer U)[] ? DeepPartial<U>[] : T extends object ? { [P in keyof T]?: DeepPartial<T[P]> } : T;
 
@@ -9,7 +15,13 @@ const cast = (schema: any): z.ZodType => {
 const defaultInstance = <T extends z.ZodType>(schema: T, source: DeepPartial<z.input<T>> = {} as DeepPartial<z.input<T>>): z.output<T> => {
 	const getDefaultValue = (schema: z.ZodType, defaultValue?: any): any => {
 		if (schema instanceof z.ZodDefault) {
-			return schema._zod.def.defaultValue();
+			const d = schema._zod.def.defaultValue;
+
+			if (isPlainObject(d)) {
+				return cloneDeep(d);
+			}
+
+			return d;
 		}
 
 		if (schema instanceof z.ZodAny) {
@@ -67,10 +79,10 @@ const defaultInstance = <T extends z.ZodType>(schema: T, source: DeepPartial<z.i
 		}
 
 		if (schema instanceof z.ZodNumber || schema instanceof z.ZodBigInt) {
-			return schema._zod.computed?.minimum ?? 0;
+			return schema._zod.bag?.minimum ?? 0;
 		}
 
-		if (schema instanceof z.ZodObject || schema instanceof z.ZodInterface) {
+		if (schema instanceof z.ZodObject) {
 			return defaultInstance(schema, {});
 		}
 
@@ -147,7 +159,7 @@ const defaultInstance = <T extends z.ZodType>(schema: T, source: DeepPartial<z.i
 			return [];
 		}
 
-		const elementSchema = schema.element;
+		const elementSchema = schema._zod.def.element;
 
 		return source.map(item => {
 			return processValue(elementSchema, item);
@@ -155,39 +167,24 @@ const defaultInstance = <T extends z.ZodType>(schema: T, source: DeepPartial<z.i
 	};
 
 	const processDiscriminatedUnion = (schema: z.ZodDiscriminatedUnion, source: any): any => {
-		if (typeof source !== 'object' || source === null) {
+		if (!isPlainObject(source) || isNil(source)) {
 			return getDefaultValue(schema);
 		}
 
-		const matchDiscriminators = (input: any, discs: Map<any, any>): boolean => {
-			let matched = true;
+		const discriminator = schema._zod.def.discriminator;
+		const discriminatorValue = source[discriminator];
 
-			for (const [key, value] of discs.entries()) {
-				const data = input?.[key];
-
-				if (value.values?.size && !value.values.has(data)) {
-					matched = false;
-				}
-
-				if (value.maps?.length > 0) {
-					for (const m of value.maps) {
-						if (!matchDiscriminators(data, m)) {
-							matched = false;
-						}
-					}
-				}
-			}
-
-			return matched;
-		};
-
+		// Find matching option based on discriminator value
 		const matchingSchema = schema._zod.def.options.find(option => {
-			return option._zod?.disc && matchDiscriminators(source, option._zod.disc);
+			const propValues = option._zod.propValues;
+			if (propValues && propValues[discriminator]) {
+				return propValues[discriminator].has(discriminatorValue);
+			}
+			return false;
 		});
 
 		if (!matchingSchema) {
 			const firstOption = schema._zod.def.options[0];
-
 			// If no matching schema is found, use the first option as default
 			return processObject(firstOption as z.ZodObject, source);
 		}
@@ -201,11 +198,15 @@ const defaultInstance = <T extends z.ZodType>(schema: T, source: DeepPartial<z.i
 		}
 
 		if (schema instanceof z.ZodBoolean) {
-			return typeof value === 'boolean' ? value : false;
+			return isBoolean(value) ? value : false;
 		}
 
 		if (schema instanceof z.ZodDiscriminatedUnion) {
 			return processDiscriminatedUnion(schema, value);
+		}
+
+		if (schema instanceof z.ZodDefault) {
+			return processValue(cast(schema._zod.def.innerType), value);
 		}
 
 		if (schema instanceof z.ZodMap) {
@@ -213,14 +214,14 @@ const defaultInstance = <T extends z.ZodType>(schema: T, source: DeepPartial<z.i
 		}
 
 		if (schema instanceof z.ZodNullable) {
-			return value === null ? null : processValue(cast(schema._zod.def.innerType), value);
+			return isNil(value) ? null : processValue(schema._zod.def.innerType as any, value);
 		}
 
 		if (schema instanceof z.ZodNumber || schema instanceof z.ZodBigInt) {
-			return typeof value === 'number' ? value : (schema._zod.computed?.minimum ?? 0);
+			return isNumber(value) ? value : (schema._zod.bag?.minimum ?? 0);
 		}
 
-		if (schema instanceof z.ZodObject || schema instanceof z.ZodInterface) {
+		if (schema instanceof z.ZodObject) {
 			return processObject(schema, value);
 		}
 
@@ -241,7 +242,7 @@ const defaultInstance = <T extends z.ZodType>(schema: T, source: DeepPartial<z.i
 		}
 
 		if (schema instanceof z.ZodString) {
-			return typeof value === 'string' ? value : '';
+			return isString(value) ? value : '';
 		}
 
 		if (schema instanceof z.ZodTransform) {
@@ -270,15 +271,28 @@ const defaultInstance = <T extends z.ZodType>(schema: T, source: DeepPartial<z.i
 		return result;
 	};
 
-	const processObject = (schema: z.ZodObject<any> | z.ZodInterface<any>, source: any): any => {
+	const processObject = (schema: z.ZodObject<any>, source: any): any => {
 		const result: any = {};
 		const shape = schema._zod.def.shape;
 
+		// Process defined schema properties
 		for (const [key, fieldSchema] of Object.entries(shape)) {
+			// Create a proper ZodType from the field schema
+			const zodFieldSchema = cast(fieldSchema);
+
 			if (source && key in source) {
-				result[key] = processValue(cast(fieldSchema), source[key]);
+				result[key] = processValue(zodFieldSchema, source[key]);
 			} else {
-				result[key] = getDefaultValue(cast(fieldSchema));
+				result[key] = getDefaultValue(zodFieldSchema);
+			}
+		}
+
+		// Handle catchall - preserve additional properties not in schema
+		if (schema._zod.def.catchall && isPlainObject(source)) {
+			for (const key in source) {
+				if (!(key in shape)) {
+					result[key] = source[key];
+				}
 			}
 		}
 
@@ -286,7 +300,7 @@ const defaultInstance = <T extends z.ZodType>(schema: T, source: DeepPartial<z.i
 	};
 
 	const processRecord = (schema: z.ZodRecord<any, any>, source: any): any => {
-		if (typeof source !== 'object' || source === null) {
+		if (!isPlainObject(source) || isNil(source)) {
 			return {};
 		}
 

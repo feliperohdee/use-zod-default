@@ -9,5 +9,5 @@
 		"strict": true,
 		"target": "ESNext"
 	},
-	"exclude": ["dist", "node_modules", "**/*.spec.ts"]
+	"exclude": ["dist", "node_modules", "**/*.spec.ts", "vitest.config.mts"]
 }

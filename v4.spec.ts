@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 
-import zDefault from './index';
+import zDefault from './v4';
 
-describe('zDefault', () => {
+describe('v4', () => {
 	describe('empty object', () => {
 		it('should handle empty object schema', () => {
 			const schema = z.object({});
@@ -13,12 +13,6 @@ describe('zDefault', () => {
 		});
 
 		it('should handle all types', () => {
-			enum NativeEnum {
-				A = 'A',
-				B = 'B',
-				C = 'C'
-			}
-
 			const schema = z.object({
 				any: z.any(),
 				bigint: z.bigint(),
@@ -30,12 +24,10 @@ describe('zDefault', () => {
 					z.object({ type: z.literal('b'), value: z.number() })
 				]),
 				enum: z.enum(['A', 'B', 'C']),
-				function: z.function(),
 				instanceof: z.instanceof(Date),
 				intersection: z.intersection(z.string(), z.number()),
 				map: z.map(z.string(), z.string()),
 				nan: z.nan(),
-				nativeEnum: z.nativeEnum(NativeEnum),
 				never: z.never(),
 				null: z.null(),
 				nullable: z.string().nullable(),
@@ -44,7 +36,7 @@ describe('zDefault', () => {
 					key: z.string()
 				}),
 				promise: z.promise(z.string()),
-				record: z.record(z.string()),
+				record: z.record(z.string(), z.string()),
 				set: z.set(z.string()),
 				string: z.string(),
 				optional: z.string().optional(),
@@ -65,12 +57,10 @@ describe('zDefault', () => {
 				default: 'default',
 				discriminatedUnion: { type: 'a', value: '' },
 				enum: 'A',
-				function: expect.any(Function),
 				instanceof: undefined,
 				intersection: '',
 				map: new Map(),
 				nan: NaN,
-				nativeEnum: 'A',
 				never: undefined,
 				null: null,
 				nullable: null,
@@ -88,6 +78,7 @@ describe('zDefault', () => {
 				void: undefined
 			});
 		});
+
 		it('should handle nested objects', () => {
 			const schema = z.object({
 				user: z.object({
@@ -231,91 +222,6 @@ describe('zDefault', () => {
 		});
 	});
 
-	describe('effects', () => {
-		it('should handle ZodEffects', () => {
-			const schema = z
-				.object({
-					name: z.string(),
-					age: z.number()
-				})
-				.refine(
-					data => {
-						return data.age >= 18;
-					},
-					{
-						message: 'Must be 18 or older',
-						path: ['age']
-					}
-				);
-
-			const res = zDefault(schema);
-
-			expect(res).toEqual({
-				name: '',
-				age: 0
-			});
-		});
-
-		it('should handle nested ZodEffects', () => {
-			const innerSchema = z
-				.object({
-					value: z.number()
-				})
-				.refine(data => {
-					return data.value > 0;
-				});
-
-			const outerSchema = z
-				.object({
-					field: innerSchema
-				})
-				.refine(data => {
-					return data.field.value < 100;
-				});
-
-			const res = zDefault(outerSchema);
-
-			expect(res).toEqual({
-				field: { value: 0 }
-			});
-		});
-
-		it('should handle preprocess', () => {
-			const schema = z.object({
-				number: z.preprocess(val => Number(val) * 2, z.number().default(21))
-			});
-
-			const res = zDefault(schema);
-
-			expect(res).toEqual({ number: 42 });
-		});
-
-		it('should handle transform', () => {
-			const schema = z.object({
-				number: z
-					.string()
-					.default('42')
-					.transform(val => Number(val)),
-				uppercase: z
-					.string()
-					.default('a')
-					.transform(val => val.toUpperCase()),
-				complex: z
-					.number()
-					.default(21)
-					.transform(n => ({ value: n * 2 }))
-			});
-
-			const res = zDefault(schema);
-
-			expect(res).toEqual({
-				number: 42,
-				uppercase: 'A',
-				complex: { value: 42 }
-			});
-		});
-	});
-
 	describe('enum', () => {
 		it('should handle with multiple enums', () => {
 			const colorEnum = z.enum(['red', 'green', 'blue']);
@@ -400,24 +306,112 @@ describe('zDefault', () => {
 		});
 	});
 
-	describe('pipeline', () => {
-		it('should handle pipeline', () => {
+	describe('preprocess / transform', () => {
+		it('should handle preprocess', () => {
 			const schema = z.object({
-				pipeline: z.pipeline(z.string(), z.string())
+				number: z.preprocess(val => {
+					return Number(val) * 2;
+				}, z.number().default(21))
 			});
+
 			const res = zDefault(schema);
 
-			expect(res).toEqual({ pipeline: '' });
+			expect(res).toEqual({ number: 42 });
+		});
+
+		it('should handle transform', () => {
+			const schema = z.object({
+				complex: z
+					.number()
+					.default(21)
+					.transform(n => ({ value: n * 2 })),
+				number: z
+					.string()
+					.default('42')
+					.transform(val => {
+						return Number(val);
+					}),
+				uppercase: z
+					.string()
+					.default('a')
+					.transform(val => {
+						return val.toUpperCase();
+					})
+			});
+
+			const res = zDefault(schema);
+
+			expect(res).toEqual({
+				complex: { value: 42 },
+				number: 42,
+				uppercase: 'A'
+			});
+		});
+	});
+
+	describe('refinements', () => {
+		it('should handle refinements', () => {
+			const schema = z
+				.object({
+					name: z.string(),
+					age: z.number()
+				})
+				.refine(
+					data => {
+						return data.age >= 18;
+					},
+					{
+						message: 'Must be 18 or older',
+						path: ['age']
+					}
+				);
+
+			const res = zDefault(schema);
+
+			expect(res).toEqual({
+				name: '',
+				age: 0
+			});
+		});
+
+		it('should handle nested refinements', () => {
+			const innerSchema = z
+				.object({
+					value: z.number()
+				})
+				.refine(data => {
+					return data.value > 0;
+				});
+
+			const outerSchema = z
+				.object({
+					field: innerSchema
+				})
+				.refine(data => {
+					return data.field.value < 100;
+				});
+
+			const res = zDefault(outerSchema);
+
+			expect(res).toEqual({
+				field: { value: 0 }
+			});
 		});
 	});
 
 	describe('record', () => {
 		it('should handle record', () => {
 			const schema = z.object({
-				dictionary: z.record(z.string())
+				mixed: z.record(z.string(), z.union([z.string(), z.number()])),
+				string: z.record(z.string(), z.string())
 			});
+
 			const source = {
-				dictionary: {
+				mixed: {
+					key1: 'value1',
+					key2: 2
+				},
+				string: {
 					key1: 'value1',
 					key2: 'value2'
 				}
@@ -426,7 +420,11 @@ describe('zDefault', () => {
 			const res = zDefault(schema, source);
 
 			expect(res).toEqual({
-				dictionary: {
+				mixed: {
+					key1: 'value1',
+					key2: 2
+				},
+				string: {
 					key1: 'value1',
 					key2: 'value2'
 				}
@@ -503,36 +501,48 @@ describe('zDefault', () => {
 			});
 		});
 
-		it('should handle preprocess effect', () => {
-			const schema = z.object({
-				number: z.preprocess(val => Number(val) * 2, z.number())
+		it('should handle preprocess', () => {
+			const numberSchema = z.preprocess(val => {
+				return Number(val) * 2;
+			}, z.number());
+
+			const schemaObject = z.object({
+				number: numberSchema
 			});
 
-			const source = {
+			const resNumber = zDefault(numberSchema, '21');
+			const resObject = zDefault(schemaObject, {
 				number: '21'
-			};
+			});
 
-			const res = zDefault(schema, source);
-
-			expect(res).toEqual({ number: 42 });
+			expect(resNumber).toEqual(42);
+			expect(resObject).toEqual({ number: 42 });
 		});
 
-		it('should handle transform effect', () => {
-			const schema = z.object({
-				number: z.string().transform(val => Number(val)),
-				uppercase: z.string().transform(val => val.toUpperCase()),
-				complex: z.number().transform(n => ({ value: n * 2 }))
+		it('should handle transform', () => {
+			const numberSchema = z.string().transform(val => {
+				return Number(val);
 			});
 
-			const source = {
+			const objectSchema = z.object({
+				number: numberSchema,
+				uppercase: z.string().transform(val => {
+					return val.toUpperCase();
+				}),
+				complex: z.number().transform(n => {
+					return { value: n * 2 };
+				})
+			});
+
+			const resNumber = zDefault(numberSchema, '42');
+			const resObject = zDefault(objectSchema, {
 				number: '42',
 				uppercase: 'hello',
 				complex: 21
-			};
+			});
 
-			const res = zDefault(schema, source);
-
-			expect(res).toEqual({
+			expect(resNumber).toEqual(42);
+			expect(resObject).toEqual({
 				number: 42,
 				uppercase: 'HELLO',
 				complex: { value: 42 }
@@ -609,12 +619,6 @@ describe('zDefault', () => {
 		});
 
 		it('should handle all types', () => {
-			enum NativeEnum {
-				A = 'A',
-				B = 'B',
-				C = 'C'
-			}
-
 			const symbol = Symbol('symbol');
 			const schema = z.object({
 				any: z.any(),
@@ -631,12 +635,10 @@ describe('zDefault', () => {
 				date: z.date(),
 				default: z.string().default('default'),
 				enum: z.enum(['A', 'B', 'C']),
-				function: z.function(),
 				instanceof: z.instanceof(Date),
 				intersection: z.intersection(z.string(), z.number()),
 				map: z.map(z.string(), z.string()),
 				nan: z.nan(),
-				nativeEnum: z.nativeEnum(NativeEnum),
 				never: z.never(),
 				null: z.null(),
 				nullable: z.string().nullable(),
@@ -646,14 +648,14 @@ describe('zDefault', () => {
 				object: z.object({
 					key: z.string()
 				}),
-				objectWithPassthrough: z
+				objectLoose: z
 					.object({
 						key1: z.string()
 					})
-					.passthrough(),
+					.loose(),
 				optional: z.string().optional(),
 				promise: z.promise(z.string()),
-				record: z.record(z.string()),
+				record: z.record(z.string(), z.union([z.string(), z.number()])),
 				string: z.string(),
 				stringSet: z.set(z.string()),
 				stringUndefined: z.string(),
@@ -680,12 +682,10 @@ describe('zDefault', () => {
 				default: 'overridden',
 				enum: 'B',
 				forbidden: 'forbidden',
-				function: () => null,
 				instanceof: new Date('2023-01-01'),
 				intersection: 42,
 				map: new Map([['key', 'value']]),
 				nan: NaN,
-				nativeEnum: 'B',
 				never: undefined,
 				null: null,
 				nullable: null,
@@ -696,7 +696,7 @@ describe('zDefault', () => {
 					forbidden: 'forbidden',
 					key: 'source key'
 				},
-				objectWithPassthrough: {
+				objectLoose: {
 					key1: 'key1',
 					key2: 'key2'
 				},
@@ -731,12 +731,10 @@ describe('zDefault', () => {
 				date: new Date('2023-01-01'),
 				default: 'overridden',
 				enum: 'B',
-				function: expect.any(Function),
 				instanceof: new Date('2023-01-01'),
 				intersection: 42,
 				map: new Map([['key', 'value']]),
 				nan: NaN,
-				nativeEnum: 'B',
 				never: undefined,
 				null: null,
 				nullable: null,
@@ -746,13 +744,13 @@ describe('zDefault', () => {
 				object: {
 					key: 'source key'
 				},
-				objectWithPassthrough: {
+				objectLoose: {
 					key1: 'key1',
 					key2: 'key2'
 				},
 				optional: 'provided',
 				promise: Promise.resolve('promise'),
-				record: { number: '', string: 'value' },
+				record: { number: 42, string: 'value' },
 				string: 'source string',
 				stringSet: new Set(['value']),
 				stringUndefined: '',

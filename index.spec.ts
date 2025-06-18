@@ -376,6 +376,15 @@ describe('zDefault', () => {
 
 			expect(res).toEqual({ number: 0 });
 		});
+
+		it('should handle minimum number', () => {
+			const schema = z.object({
+				number: z.number().min(10)
+			});
+			const res = zDefault(schema);
+
+			expect(res).toEqual({ number: 10 });
+		});
 	});
 
 	describe('object', () => {

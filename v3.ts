@@ -1,6 +1,6 @@
 import cloneDeep from 'lodash/cloneDeep';
 import isPlainObject from 'lodash/isPlainObject';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 type DeepPartial<T> = T extends (infer U)[] ? DeepPartial<U>[] : T extends object ? { [P in keyof T]?: DeepPartial<T[P]> } : T;
 

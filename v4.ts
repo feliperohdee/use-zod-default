@@ -176,7 +176,8 @@ const defaultInstance = <T extends z.ZodType>(schema: T, source: DeepPartial<z.i
 
 		// Find matching option based on discriminator value
 		const matchingSchema = schema._zod.def.options.find(option => {
-			const propValues = option._zod.propValues;
+			const { propValues } = option._zod;
+
 			if (propValues && propValues[discriminator]) {
 				return propValues[discriminator].has(discriminatorValue);
 			}

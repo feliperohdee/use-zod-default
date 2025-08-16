@@ -5,7 +5,7 @@ export default defineConfig({
 		coverage: {
 			provider: 'v8',
 			reporter: ['text', 'html'],
-			exclude: ['dist', '**/*.spec.ts', 'vitest.config.mts']
+			exclude: ['dist', 'demo.ts', 'eslint.config.mjs', '**/*.spec.ts', 'vitest.config.mts']
 		}
 	}
 });

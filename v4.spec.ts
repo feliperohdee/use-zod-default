@@ -26,6 +26,10 @@ describe('v4', () => {
 				enum: z.enum(['A', 'B', 'C']),
 				instanceof: z.instanceof(Date),
 				intersection: z.intersection(z.string(), z.number()),
+				isoDate: z.iso.date(),
+				isoDateTime: z.iso.datetime(),
+				isoDuration: z.iso.duration(),
+				isoTime: z.iso.time(),
 				map: z.map(z.string(), z.string()),
 				nan: z.nan(),
 				never: z.never(),
@@ -59,6 +63,10 @@ describe('v4', () => {
 				enum: 'A',
 				instanceof: undefined,
 				intersection: '',
+				isoDate: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+				isoDateTime: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/),
+				isoDuration: 'P0D',
+				isoTime: expect.stringMatching(/^\d{2}:\d{2}:\d{2}.\d{3}Z$/),
 				map: new Map(),
 				nan: NaN,
 				never: undefined,
@@ -200,6 +208,139 @@ describe('v4', () => {
 			const res = zDefault(schema);
 
 			expect(res.createdAt).toBeNull();
+		});
+	});
+
+	describe('isoDate', () => {
+		it('should handle iso date without source', () => {
+			const schema = z.object({
+				createdAt: z.iso.date()
+			});
+
+			const res = zDefault(schema);
+
+			expect(res.createdAt).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+		});
+
+		it('should handle iso date with valid source', () => {
+			const schema = z.object({
+				createdAt: z.iso.date()
+			});
+
+			const source = {
+				createdAt: '2023-12-25'
+			};
+
+			const res = zDefault(schema, source);
+
+			expect(res).toEqual({
+				createdAt: '2023-12-25'
+			});
+		});
+
+		it('should handle iso date with invalid source', () => {
+			const schema = z.object({
+				createdAt: z.iso.date()
+			});
+
+			const source = {
+				createdAt: 12345
+			};
+
+			// @ts-expect-error - testing invalid input type
+			const res = zDefault(schema, source);
+
+			expect(res.createdAt).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+		});
+	});
+
+	describe('isoDateTime', () => {
+		it('should handle iso datetime without source', () => {
+			const schema = z.object({
+				createdAt: z.iso.datetime()
+			});
+
+			const res = zDefault(schema);
+
+			expect(res.createdAt).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/);
+		});
+
+		it('should handle iso datetime with valid source', () => {
+			const schema = z.object({
+				createdAt: z.iso.datetime()
+			});
+
+			const source = {
+				createdAt: '2023-12-25T10:30:00.000Z'
+			};
+
+			const res = zDefault(schema, source);
+
+			expect(res).toEqual({
+				createdAt: '2023-12-25T10:30:00.000Z'
+			});
+		});
+
+		it('should handle iso datetime with invalid source', () => {
+			const schema = z.object({
+				createdAt: z.iso.datetime()
+			});
+
+			const source = {
+				createdAt: new Date()
+			};
+
+			// @ts-expect-error - testing invalid input type
+			const res = zDefault(schema, source);
+
+			expect(res.createdAt).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/);
+		});
+	});
+
+	describe('isoDuration', () => {
+		it('should handle iso duration without source', () => {
+			const schema = z.object({
+				duration: z.iso.duration()
+			});
+
+			const res = zDefault(schema);
+
+			expect(res).toEqual({
+				duration: 'P0D'
+			});
+		});
+
+		it('should handle iso duration with valid source', () => {
+			const schema = z.object({
+				duration: z.iso.duration()
+			});
+
+			const source = {
+				duration: 'P1Y2M3DT4H5M6S'
+			};
+
+			const res = zDefault(schema, source);
+
+			expect(res).toEqual({
+				duration: 'P1Y2M3DT4H5M6S'
+			});
+		});
+
+		it('should handle iso duration with invalid source', () => {
+			const schema = z.object({
+				duration: z.iso.duration()
+			});
+
+			const source = {
+				duration: 123
+			};
+
+			// @ts-expect-error - testing invalid input type
+			const res = zDefault(schema, source);
+
+			expect(res).toEqual({
+				duration: 'P0D'
+			});
 		});
 	});
 
@@ -637,6 +778,10 @@ describe('v4', () => {
 				enum: z.enum(['A', 'B', 'C']),
 				instanceof: z.instanceof(Date),
 				intersection: z.intersection(z.string(), z.number()),
+				isoDate: z.iso.date(),
+				isoDateTime: z.iso.datetime(),
+				isoDuration: z.iso.duration(),
+				isoTime: z.iso.time(),
 				map: z.map(z.string(), z.string()),
 				nan: z.nan(),
 				never: z.never(),
@@ -684,6 +829,10 @@ describe('v4', () => {
 				forbidden: 'forbidden',
 				instanceof: new Date('2023-01-01'),
 				intersection: 42,
+				isoDate: '2023-01-01',
+				isoDateTime: '2023-01-01T00:00:00.000Z',
+				isoDuration: 'P0D',
+				isoTime: '00:00:00.000Z',
 				map: new Map([['key', 'value']]),
 				nan: NaN,
 				never: undefined,
@@ -733,6 +882,10 @@ describe('v4', () => {
 				enum: 'B',
 				instanceof: new Date('2023-01-01'),
 				intersection: 42,
+				isoDate: '2023-01-01',
+				isoDateTime: '2023-01-01T00:00:00.000Z',
+				isoDuration: 'P0D',
+				isoTime: '00:00:00.000Z',
 				map: new Map([['key', 'value']]),
 				nan: NaN,
 				never: undefined,

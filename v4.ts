@@ -40,6 +40,22 @@ const defaultInstance = <T extends z.ZodType>(schema: T, source: DeepPartial<z.i
 			return null;
 		}
 
+		if (schema instanceof z.ZodISODate) {
+			return new Date().toISOString().split('T')[0];
+		}
+
+		if (schema instanceof z.ZodISODateTime) {
+			return new Date().toISOString();
+		}
+
+		if (schema instanceof z.ZodISODuration) {
+			return 'P0D';
+		}
+
+		if (schema instanceof z.ZodISOTime) {
+			return new Date().toISOString().split('T')[1];
+		}
+
 		if (schema instanceof z.ZodDiscriminatedUnion) {
 			const firstOption = schema._zod.def.options[0];
 
@@ -181,7 +197,7 @@ const defaultInstance = <T extends z.ZodType>(schema: T, source: DeepPartial<z.i
 			if (propValues && propValues[discriminator]) {
 				return propValues[discriminator].has(discriminatorValue);
 			}
-			
+
 			return false;
 		});
 
@@ -209,6 +225,22 @@ const defaultInstance = <T extends z.ZodType>(schema: T, source: DeepPartial<z.i
 
 		if (schema instanceof z.ZodDefault) {
 			return processValue(cast(schema._zod.def.innerType), value);
+		}
+
+		if (schema instanceof z.ZodISODate) {
+			return isString(value) ? value : new Date().toISOString().split('T')[0];
+		}
+
+		if (schema instanceof z.ZodISODateTime) {
+			return isString(value) ? value : new Date().toISOString();
+		}
+
+		if (schema instanceof z.ZodISODuration) {
+			return isString(value) ? value : 'P0D';
+		}
+
+		if (schema instanceof z.ZodISOTime) {
+			return isString(value) ? value : new Date().toISOString().split('T')[1];
 		}
 
 		if (schema instanceof z.ZodMap) {

@@ -39,5 +39,5 @@
 		"test:watch": "vitest",
 		"test:coverage": "rm -rf coverage && vitest --run --coverage"
 	},
-	"version": "1.0.20"
+	"version": "1.0.21"
 }

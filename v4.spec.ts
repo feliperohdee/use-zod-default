@@ -133,10 +133,10 @@ describe('v4', () => {
 				intersection: '',
 				ipv4: '',
 				ipv6: '',
-				isoDate: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
-				isoDateTime: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/),
-				isoDuration: 'P0D',
-				isoTime: expect.stringMatching(/^\d{2}:\d{2}:\d{2}.\d{3}Z$/),
+				isoDate: '',
+				isoDateTime: '',
+				isoDuration: '',
+				isoTime: '',
 				jwt: '',
 				keyof: 'foo',
 				ksuid: '',
@@ -567,7 +567,7 @@ describe('v4', () => {
 
 			const res = zDefault(schema);
 
-			expect(res.createdAt).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+			expect(res.createdAt).toEqual('');
 		});
 
 		it('should handle iso date with valid source', () => {
@@ -610,7 +610,7 @@ describe('v4', () => {
 
 			const res = zDefault(schema);
 
-			expect(res.createdAt).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/);
+			expect(res.createdAt).toEqual('');
 		});
 
 		it('should handle iso datetime with valid source', () => {
@@ -654,7 +654,7 @@ describe('v4', () => {
 			const res = zDefault(schema);
 
 			expect(res).toEqual({
-				duration: 'P0D'
+				duration: ''
 			});
 		});
 
@@ -700,7 +700,7 @@ describe('v4', () => {
 
 			const res = zDefault(schema);
 
-			expect(res.time).toMatch(/^\d{2}:\d{2}:\d{2}.\d{3}Z$/);
+			expect(res.time).toEqual('');
 		});
 
 		it('should handle iso time with valid source', () => {
@@ -1025,7 +1025,7 @@ describe('v4', () => {
 			const res = zDefault(schema);
 
 			expect(res.asyncValue).toBeInstanceOf(Promise);
-			await expect(res.asyncValue).resolves.toBe('');
+			await expect(res.asyncValue).resolves.toEqual('');
 		});
 
 		it('should handle promise with source', () => {

@@ -48,22 +48,6 @@ const defaultInstance = <T extends z.ZodType>(schema: T, source: DeepPartial<z.i
 			return null;
 		}
 
-		if (schema instanceof z.ZodISODate) {
-			return new Date().toISOString().split('T')[0];
-		}
-
-		if (schema instanceof z.ZodISODateTime) {
-			return new Date().toISOString();
-		}
-
-		if (schema instanceof z.ZodISODuration) {
-			return 'P0D';
-		}
-
-		if (schema instanceof z.ZodISOTime) {
-			return new Date().toISOString().split('T')[1];
-		}
-
 		if (schema instanceof z.ZodDiscriminatedUnion) {
 			const firstOption = schema._zod.def.options[0];
 
@@ -150,6 +134,10 @@ const defaultInstance = <T extends z.ZodType>(schema: T, source: DeepPartial<z.i
 			schema instanceof z.ZodGUID ||
 			schema instanceof z.ZodIPv4 ||
 			schema instanceof z.ZodIPv6 ||
+			schema instanceof z.ZodISODate ||
+			schema instanceof z.ZodISODateTime ||
+			schema instanceof z.ZodISODuration ||
+			schema instanceof z.ZodISOTime ||
 			schema instanceof z.ZodJWT ||
 			schema instanceof z.ZodKSUID ||
 			schema instanceof z.ZodNanoID ||

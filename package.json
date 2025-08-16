@@ -35,7 +35,8 @@
 		"build": "rm -rf dist && yarn lint && tsc -p tsconfig.json",
 		"lint": "prettier --write . && eslint . && yarn tsc",
 		"npm:publish": "yarn test --run && yarn build && yarn version --patch --no-git-tag-version && yarn publish --non-interactive",
-		"test": "vitest",
+		"test": "vitest --run",
+		"test:watch": "vitest",
 		"test:coverage": "rm -rf coverage && vitest --run --coverage"
 	},
 	"version": "1.0.19"

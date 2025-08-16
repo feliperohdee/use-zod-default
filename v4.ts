@@ -32,6 +32,14 @@ const defaultInstance = <T extends z.ZodType>(schema: T, source: DeepPartial<z.i
 			return [];
 		}
 
+		if (schema instanceof z.ZodBigInt) {
+			if (schema._zod.bag?.minimum && schema._zod.bag?.minimum > 0) {
+				return BigInt(schema._zod.bag?.minimum);
+			}
+
+			return BigInt(0);
+		}
+
 		if (schema instanceof z.ZodBoolean) {
 			return false;
 		}
@@ -94,8 +102,12 @@ const defaultInstance = <T extends z.ZodType>(schema: T, source: DeepPartial<z.i
 			return null;
 		}
 
-		if (schema instanceof z.ZodNumber || schema instanceof z.ZodBigInt) {
-			return schema._zod.bag?.minimum ?? 0;
+		if (schema instanceof z.ZodNumber) {
+			if (schema._zod.bag?.minimum && schema._zod.bag?.minimum > 0) {
+				return schema._zod.bag?.minimum;
+			}
+
+			return 0;
 		}
 
 		if (schema instanceof z.ZodObject) {
@@ -109,7 +121,7 @@ const defaultInstance = <T extends z.ZodType>(schema: T, source: DeepPartial<z.i
 				return getDefaultValue(cast(schema._zod.def.out), defaultInValue);
 			}
 
-			return getDefaultValue(cast(schema._zod.def.in), getDefaultValue(cast(schema._zod.def.out)));
+			return getDefaultValue(cast(schema._zod.def.out));
 		}
 
 		if (schema instanceof z.ZodPromise) {
@@ -124,7 +136,29 @@ const defaultInstance = <T extends z.ZodType>(schema: T, source: DeepPartial<z.i
 			return new Set();
 		}
 
-		if (schema instanceof z.ZodString) {
+		if (
+			schema instanceof z.ZodBase64 ||
+			schema instanceof z.ZodBase64URL ||
+			schema instanceof z.ZodCIDRv4 ||
+			schema instanceof z.ZodCIDRv6 ||
+			schema instanceof z.ZodCUID ||
+			schema instanceof z.ZodCUID2 ||
+			schema instanceof z.ZodCustomStringFormat ||
+			schema instanceof z.ZodE164 ||
+			schema instanceof z.ZodEmail ||
+			schema instanceof z.ZodEmoji ||
+			schema instanceof z.ZodGUID ||
+			schema instanceof z.ZodIPv4 ||
+			schema instanceof z.ZodIPv6 ||
+			schema instanceof z.ZodJWT ||
+			schema instanceof z.ZodKSUID ||
+			schema instanceof z.ZodNanoID ||
+			schema instanceof z.ZodString ||
+			schema instanceof z.ZodULID ||
+			schema instanceof z.ZodURL ||
+			schema instanceof z.ZodUUID ||
+			schema instanceof z.ZodXID
+		) {
 			return '';
 		}
 
@@ -215,6 +249,14 @@ const defaultInstance = <T extends z.ZodType>(schema: T, source: DeepPartial<z.i
 			return processArray(schema, value);
 		}
 
+		if (schema instanceof z.ZodBigInt) {
+			if (typeof value === 'bigint') {
+				return value;
+			}
+
+			return typeof value === 'number' ? BigInt(value) : BigInt(0);
+		}
+
 		if (schema instanceof z.ZodBoolean) {
 			return isBoolean(value) ? value : false;
 		}
@@ -251,7 +293,7 @@ const defaultInstance = <T extends z.ZodType>(schema: T, source: DeepPartial<z.i
 			return isNil(value) ? null : processValue(schema._zod.def.innerType as any, value);
 		}
 
-		if (schema instanceof z.ZodNumber || schema instanceof z.ZodBigInt) {
+		if (schema instanceof z.ZodNumber) {
 			return isNumber(value) ? value : (schema._zod.bag?.minimum ?? 0);
 		}
 

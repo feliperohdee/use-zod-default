@@ -15,23 +15,59 @@ describe('v4', () => {
 		it('should handle all types', () => {
 			const schema = z.object({
 				any: z.any(),
+				base64: z.base64(),
+				base64url: z.base64url(),
 				bigint: z.bigint(),
 				boolean: z.boolean(),
+				cidrv4: z.cidrv4(),
+				cidrv6: z.cidrv6(),
+				cuid: z.cuid(),
+				cuid2: z.cuid2(),
+				custom: z.custom(),
 				date: z.date(),
 				default: z.string().default('default'),
 				discriminatedUnion: z.discriminatedUnion('type', [
-					z.object({ type: z.literal('a'), value: z.string() }),
-					z.object({ type: z.literal('b'), value: z.number() })
+					z.object({
+						type: z.literal('a'),
+						value: z.string()
+					}),
+					z.object({
+						type: z.literal('b'),
+						value: z.number()
+					})
 				]),
+				e164: z.e164(),
+				email: z.email(),
+				emoji: z.emoji(),
 				enum: z.enum(['A', 'B', 'C']),
+				file: z.file(),
+				float32: z.float32(),
+				float64: z.float64(),
+				guid: z.guid(),
+				hostname: z.hostname(),
 				instanceof: z.instanceof(Date),
+				int: z.int(),
+				int32: z.int32(),
+				int64: z.int64(),
 				intersection: z.intersection(z.string(), z.number()),
+				ipv4: z.ipv4(),
+				ipv6: z.ipv6(),
 				isoDate: z.iso.date(),
 				isoDateTime: z.iso.datetime(),
 				isoDuration: z.iso.duration(),
 				isoTime: z.iso.time(),
+				jwt: z.jwt(),
+				keyof: z.keyof(
+					z.object({
+						foo: z.string(),
+						bar: z.number()
+					})
+				),
+				ksuid: z.ksuid(),
+				literal: z.literal('literal'),
 				map: z.map(z.string(), z.string()),
 				nan: z.nan(),
+				nanoid: z.nanoid(),
 				never: z.never(),
 				null: z.null(),
 				nullable: z.string().nullable(),
@@ -39,51 +75,103 @@ describe('v4', () => {
 				object: z.object({
 					key: z.string()
 				}),
+				optional: z.string().optional(),
 				promise: z.promise(z.string()),
 				record: z.record(z.string(), z.string()),
 				set: z.set(z.string()),
 				string: z.string(),
-				optional: z.string().optional(),
+				stringbool: z.stringbool(),
 				symbol: z.symbol(),
 				tuple: z.tuple([z.string(), z.number()]),
+				uint32: z.uint32(),
+				uint64: z.uint64(),
+				ulid: z.ulid(),
 				undefined: z.undefined(),
 				union: z.union([z.string(), z.number()]),
-				void: z.void()
+				unknown: z.unknown(),
+				url: z.url(),
+				uuid: z.uuid(),
+				uuidv4: z.uuidv4(),
+				uuidv6: z.uuidv6(),
+				uuidv7: z.uuidv7(),
+				void: z.void(),
+				xid: z.xid()
 			});
 
 			const res = zDefault(schema);
 
 			expect(res).toEqual({
 				any: undefined,
-				bigint: 0,
+				base64: '',
+				base64url: '',
+				bigint: 0n,
 				boolean: false,
+				cidrv4: '',
+				cidrv6: '',
+				cuid: '',
+				cuid2: '',
+				custom: undefined,
 				date: null,
 				default: 'default',
-				discriminatedUnion: { type: 'a', value: '' },
+				discriminatedUnion: {
+					type: 'a',
+					value: ''
+				},
+				e164: '',
+				email: '',
+				emoji: '',
 				enum: 'A',
+				file: undefined,
+				float32: 0,
+				float64: 0,
+				guid: '',
+				hostname: '',
 				instanceof: undefined,
+				int: 0,
+				int32: 0,
+				int64: 0n,
 				intersection: '',
+				ipv4: '',
+				ipv6: '',
 				isoDate: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
 				isoDateTime: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/),
 				isoDuration: 'P0D',
 				isoTime: expect.stringMatching(/^\d{2}:\d{2}:\d{2}.\d{3}Z$/),
+				jwt: '',
+				keyof: 'foo',
+				ksuid: '',
+				literal: 'literal',
 				map: new Map(),
 				nan: NaN,
+				nanoid: '',
 				never: undefined,
 				null: null,
 				nullable: null,
 				number: 0,
-				object: { key: '' },
+				object: {
+					key: ''
+				},
+				optional: '',
 				promise: Promise.resolve(''),
 				record: {},
 				set: new Set(),
 				string: '',
-				optional: '',
+				stringbool: false,
 				symbol: '',
 				tuple: [],
+				uint32: 0,
+				uint64: 0n,
+				ulid: '',
+				unknown: undefined,
 				undefined: undefined,
 				union: '',
-				void: undefined
+				url: '',
+				uuid: '',
+				uuidv4: '',
+				uuidv6: '',
+				uuidv7: '',
+				void: undefined,
+				xid: ''
 			});
 		});
 
@@ -175,6 +263,36 @@ describe('v4', () => {
 		});
 	});
 
+	describe('any', () => {
+		it('should handle any without source', () => {
+			const schema = z.object({
+				anything: z.any()
+			});
+
+			const res = zDefault(schema);
+
+			expect(res).toEqual({
+				anything: undefined
+			});
+		});
+
+		it('should handle any with source', () => {
+			const schema = z.object({
+				anything: z.any()
+			});
+
+			const source = {
+				anything: { complex: 'object', with: ['nested', 'values'] }
+			};
+
+			const res = zDefault(schema, source);
+
+			expect(res).toEqual({
+				anything: { complex: 'object', with: ['nested', 'values'] }
+			});
+		});
+	});
+
 	describe('array', () => {
 		it('should handle array', () => {
 			const schema = z.object({
@@ -184,6 +302,53 @@ describe('v4', () => {
 
 			expect(res).toEqual({
 				items: []
+			});
+		});
+	});
+
+	describe('bigint', () => {
+		it('should handle bigint without source', () => {
+			const schema = z.object({
+				bigNumber: z.bigint()
+			});
+
+			const res = zDefault(schema);
+
+			expect(res).toEqual({
+				bigNumber: 0n
+			});
+		});
+
+		it('should handle bigint with valid source', () => {
+			const schema = z.object({
+				bigNumber: z.bigint()
+			});
+
+			const source = {
+				bigNumber: 123n
+			};
+
+			const res = zDefault(schema, source);
+
+			expect(res).toEqual({
+				bigNumber: 123n
+			});
+		});
+
+		it('should handle bigint with invalid source', () => {
+			const schema = z.object({
+				bigNumber: z.bigint()
+			});
+
+			const source = {
+				bigNumber: 'not a bigint'
+			};
+
+			// @ts-expect-error - testing invalid input type
+			const res = zDefault(schema, source);
+
+			expect(res).toEqual({
+				bigNumber: 0n
 			});
 		});
 	});
@@ -199,6 +364,38 @@ describe('v4', () => {
 		});
 	});
 
+	describe('custom', () => {
+		it('should handle custom without source', () => {
+			const customValidator = z.custom<string>(data => typeof data === 'string');
+			const schema = z.object({
+				customValue: customValidator
+			});
+
+			const res = zDefault(schema);
+
+			expect(res).toEqual({
+				customValue: undefined
+			});
+		});
+
+		it('should handle custom with source', () => {
+			const customValidator = z.custom<string>(data => typeof data === 'string');
+			const schema = z.object({
+				customValue: customValidator
+			});
+
+			const source = {
+				customValue: 'valid custom value'
+			};
+
+			const res = zDefault(schema, source);
+
+			expect(res).toEqual({
+				customValue: 'valid custom value'
+			});
+		});
+	});
+
 	describe('date', () => {
 		it('should handle date', () => {
 			const schema = z.object({
@@ -208,6 +405,157 @@ describe('v4', () => {
 			const res = zDefault(schema);
 
 			expect(res.createdAt).toBeNull();
+		});
+	});
+
+	describe('discriminated union', () => {
+		it('should handle discriminated union', () => {
+			const schema = z.discriminatedUnion('type', [
+				z.object({
+					type: z.literal('a'),
+					value: z.string()
+				}),
+				z.object({
+					type: z.literal('b'),
+					value: z.number()
+				})
+			]);
+
+			const res = zDefault(schema);
+
+			expect(res).toEqual({ type: 'a', value: '' });
+		});
+	});
+
+	describe('enum', () => {
+		it('should handle with multiple enums', () => {
+			const colorEnum = z.enum(['red', 'green', 'blue']);
+			const sizeEnum = z.enum(['small', 'medium', 'large']);
+			const schema = z.object({
+				color: colorEnum,
+				size: sizeEnum
+			});
+
+			const res = zDefault(schema);
+
+			expect(res).toEqual({
+				color: 'red',
+				size: 'small'
+			});
+		});
+	});
+
+	describe('file', () => {
+		it('should handle file without source', () => {
+			const schema = z.object({
+				upload: z.file()
+			});
+
+			const res = zDefault(schema);
+
+			expect(res).toEqual({
+				upload: undefined
+			});
+		});
+
+		it('should handle file with source', () => {
+			const schema = z.object({
+				upload: z.file()
+			});
+
+			const mockFile = new File(['content'], 'test.txt', { type: 'text/plain' });
+			const source = {
+				upload: mockFile
+			};
+
+			const res = zDefault(schema, source);
+
+			expect(res).toEqual({
+				upload: mockFile
+			});
+		});
+	});
+
+	describe('instanceof', () => {
+		it('should handle instanceof without source', () => {
+			const schema = z.object({
+				date: z.instanceof(Date)
+			});
+
+			const res = zDefault(schema);
+
+			expect(res).toEqual({
+				date: undefined
+			});
+		});
+
+		it('should handle instanceof with source', () => {
+			const schema = z.object({
+				date: z.instanceof(Date)
+			});
+
+			const testDate = new Date('2023-01-01');
+			const source = {
+				date: testDate
+			};
+
+			const res = zDefault(schema, source);
+
+			expect(res).toEqual({
+				date: testDate
+			});
+		});
+	});
+
+	describe('intersection', () => {
+		it('should handle intersection without source', () => {
+			const schema = z.object({
+				mixed: z.intersection(
+					z.object({
+						name: z.string()
+					}),
+					z.object({
+						role: z.string()
+					})
+				)
+			});
+
+			const res = zDefault(schema);
+
+			expect(res).toEqual({
+				mixed: {
+					name: ''
+				}
+			});
+		});
+
+		it('should handle intersection with source', () => {
+			const schema = z.object({
+				mixed: z.intersection(
+					z.object({
+						name: z.string()
+					}),
+					z.object({
+						role: z.string()
+					})
+				)
+			});
+
+			const source = {
+				mixed: {
+					name: 'test',
+					role: 'test'
+				}
+			};
+
+			const res = zDefault(schema, source);
+
+			expect(res).toEqual({
+				mixed: {
+					name: 'test',
+					role: 'test'
+				}
+			});
 		});
 	});
 
@@ -344,40 +692,46 @@ describe('v4', () => {
 		});
 	});
 
-	describe('discriminated union', () => {
-		it('should handle discriminated union', () => {
-			const schema = z.discriminatedUnion('type', [
-				z.object({
-					type: z.literal('a'),
-					value: z.string()
-				}),
-				z.object({
-					type: z.literal('b'),
-					value: z.number()
-				})
-			]);
-
-			const res = zDefault(schema);
-
-			expect(res).toEqual({ type: 'a', value: '' });
-		});
-	});
-
-	describe('enum', () => {
-		it('should handle with multiple enums', () => {
-			const colorEnum = z.enum(['red', 'green', 'blue']);
-			const sizeEnum = z.enum(['small', 'medium', 'large']);
+	describe('isoTime', () => {
+		it('should handle iso time without source', () => {
 			const schema = z.object({
-				color: colorEnum,
-				size: sizeEnum
+				time: z.iso.time()
 			});
 
 			const res = zDefault(schema);
+
+			expect(res.time).toMatch(/^\d{2}:\d{2}:\d{2}.\d{3}Z$/);
+		});
+
+		it('should handle iso time with valid source', () => {
+			const schema = z.object({
+				time: z.iso.time()
+			});
+
+			const source = {
+				time: '10:30:00.000Z'
+			};
+
+			const res = zDefault(schema, source);
 
 			expect(res).toEqual({
-				color: 'red',
-				size: 'small'
+				time: '10:30:00.000Z'
 			});
+		});
+
+		it('should handle iso time with invalid source', () => {
+			const schema = z.object({
+				time: z.iso.time()
+			});
+
+			const source = {
+				time: 12345
+			};
+
+			// @ts-expect-error - testing invalid input type
+			const res = zDefault(schema, source);
+
+			expect(res.time).toMatch(/^\d{2}:\d{2}:\d{2}.\d{3}Z$/);
 		});
 	});
 
@@ -389,6 +743,48 @@ describe('v4', () => {
 			const res = zDefault(schema);
 
 			expect(res).toEqual({ literal: 'value' });
+		});
+	});
+
+	describe('keyof', () => {
+		it('should handle keyof without source', () => {
+			const baseSchema = z.object({
+				foo: z.string(),
+				bar: z.number(),
+				baz: z.boolean()
+			});
+
+			const schema = z.object({
+				key: z.keyof(baseSchema)
+			});
+
+			const res = zDefault(schema);
+
+			expect(res).toEqual({
+				key: 'foo'
+			});
+		});
+
+		it('should handle keyof with source', () => {
+			const baseSchema = z.object({
+				foo: z.string(),
+				bar: z.number(),
+				baz: z.boolean()
+			});
+
+			const schema = z.object({
+				key: z.keyof(baseSchema)
+			});
+
+			const source = {
+				key: 'bar' as const
+			};
+
+			const res = zDefault(schema, source);
+
+			expect(res).toEqual({
+				key: 'bar'
+			});
 		});
 	});
 
@@ -434,6 +830,66 @@ describe('v4', () => {
 		});
 	});
 
+	describe('numeric types', () => {
+		it('should handle specialized number types', () => {
+			const schema = z.object({
+				float32: z.float32(),
+				float64: z.float64(),
+				int: z.int(),
+				int32: z.int32(),
+				int64: z.int64(),
+				uint32: z.uint32(),
+				uint64: z.uint64()
+			});
+
+			const res = zDefault(schema);
+
+			expect(res).toEqual({
+				float32: 0,
+				float64: 0,
+				int: 0,
+				int32: 0,
+				int64: 0n,
+				uint32: 0,
+				uint64: 0n
+			});
+		});
+
+		it('should handle specialized number types with source', () => {
+			const schema = z.object({
+				float32: z.float32(),
+				float64: z.float64(),
+				int: z.int(),
+				int32: z.int32(),
+				int64: z.int64(),
+				uint32: z.uint32(),
+				uint64: z.uint64()
+			});
+
+			const source = {
+				float32: 3.14159,
+				float64: 3.141592653589793,
+				int: 42,
+				int32: 2147483647,
+				int64: 9223372036854775807n,
+				uint32: 4294967295,
+				uint64: 18446744073709551615n
+			};
+
+			const res = zDefault(schema, source);
+
+			expect(res).toEqual({
+				float32: 3.14159,
+				float64: 3.141592653589793,
+				int: 42,
+				int32: 2147483647,
+				int64: 9223372036854775807n,
+				uint32: 4294967295,
+				uint64: 18446744073709551615n
+			});
+		});
+	});
+
 	describe('object', () => {
 		it('should handle object', () => {
 			const schema = z.object({
@@ -447,6 +903,76 @@ describe('v4', () => {
 		});
 	});
 
+	describe('nan', () => {
+		it('should handle nan without source', () => {
+			const schema = z.object({
+				notANumber: z.nan()
+			});
+
+			const res = zDefault(schema);
+
+			expect(res.notANumber).toBeNaN();
+		});
+
+		it('should handle nan with source', () => {
+			const schema = z.object({
+				notANumber: z.nan()
+			});
+
+			const source = {
+				notANumber: NaN
+			};
+
+			const res = zDefault(schema, source);
+
+			expect(res.notANumber).toBeNaN();
+		});
+	});
+
+	describe('never', () => {
+		it('should handle never without source', () => {
+			const schema = z.object({
+				impossible: z.never()
+			});
+
+			const res = zDefault(schema);
+
+			expect(res).toEqual({
+				impossible: undefined
+			});
+		});
+	});
+
+	describe('null', () => {
+		it('should handle null without source', () => {
+			const schema = z.object({
+				nullValue: z.null()
+			});
+
+			const res = zDefault(schema);
+
+			expect(res).toEqual({
+				nullValue: null
+			});
+		});
+
+		it('should handle null with source', () => {
+			const schema = z.object({
+				nullValue: z.null()
+			});
+
+			const source = {
+				nullValue: null
+			};
+
+			const res = zDefault(schema, source);
+
+			expect(res).toEqual({
+				nullValue: null
+			});
+		});
+	});
+
 	describe('preprocess / transform', () => {
 		it('should handle preprocess', () => {
 			const schema = z.object({
@@ -457,7 +983,7 @@ describe('v4', () => {
 
 			const res = zDefault(schema);
 
-			expect(res).toEqual({ number: 42 });
+			expect(res).toEqual({ number: 21 });
 		});
 
 		it('should handle transform', () => {
@@ -487,6 +1013,34 @@ describe('v4', () => {
 				number: 42,
 				uppercase: 'A'
 			});
+		});
+	});
+
+	describe('promise', () => {
+		it('should handle promise without source', async () => {
+			const schema = z.object({
+				asyncValue: z.promise(z.string())
+			});
+
+			const res = zDefault(schema);
+
+			expect(res.asyncValue).toBeInstanceOf(Promise);
+			await expect(res.asyncValue).resolves.toBe('');
+		});
+
+		it('should handle promise with source', () => {
+			const schema = z.object({
+				asyncValue: z.promise(z.string())
+			});
+
+			const sourcePromise = Promise.resolve('resolved value');
+			const source = {
+				asyncValue: sourcePromise
+			};
+
+			const res = zDefault(schema, source);
+
+			expect(res.asyncValue).toBe(sourcePromise);
 		});
 	});
 
@@ -595,6 +1149,380 @@ describe('v4', () => {
 		});
 	});
 
+	describe('stringbool', () => {
+		it('should handle stringbool without source', () => {
+			const schema = z.object({
+				boolString: z.stringbool()
+			});
+
+			const res = zDefault(schema);
+
+			expect(res).toEqual({
+				boolString: false
+			});
+		});
+
+		it('should handle stringbool with source', () => {
+			const schemaTrue = z.object({
+				boolStringTrue: z.stringbool(),
+				boolString1: z.stringbool(),
+				boolStringYes: z.stringbool(),
+				boolStringOn: z.stringbool(),
+				boolStringY: z.stringbool(),
+				boolStringEnabled: z.stringbool()
+			});
+
+			const schemaFalse = z.object({
+				boolStringFalse: z.stringbool(),
+				boolString0: z.stringbool(),
+				boolStringNo: z.stringbool(),
+				boolStringOff: z.stringbool(),
+				boolStringN: z.stringbool(),
+				boolStringDisabled: z.stringbool()
+			});
+
+			const sourceTrue = {
+				boolStringTrue: 'true',
+				boolString1: '1',
+				boolStringYes: 'yes',
+				boolStringOn: 'on',
+				boolStringY: 'y',
+				boolStringEnabled: 'enabled'
+			};
+
+			const sourceFalse = {
+				boolStringFalse: 'false',
+				boolString0: '0',
+				boolStringNo: 'no',
+				boolStringOff: 'off',
+				boolStringN: 'n',
+				boolStringDisabled: 'disabled'
+			};
+
+			const resTrue = zDefault(schemaTrue, sourceTrue);
+			const resFalse = zDefault(schemaFalse, sourceFalse);
+
+			expect(resTrue).toEqual({
+				boolStringTrue: true,
+				boolString1: true,
+				boolStringYes: true,
+				boolStringOn: true,
+				boolStringY: true,
+				boolStringEnabled: true
+			});
+
+			expect(resFalse).toEqual({
+				boolStringFalse: false,
+				boolString0: false,
+				boolStringNo: false,
+				boolStringOff: false,
+				boolStringN: false,
+				boolStringDisabled: false
+			});
+		});
+	});
+
+	describe('string formats', () => {
+		it('should handle base64 types', () => {
+			const schema = z.object({
+				base64: z.base64(),
+				base64url: z.base64url()
+			});
+
+			const res = zDefault(schema);
+
+			expect(res).toEqual({
+				base64: '',
+				base64url: ''
+			});
+		});
+
+		it('should handle base64 types with source', () => {
+			const schema = z.object({
+				base64: z.base64(),
+				base64url: z.base64url()
+			});
+
+			const source = {
+				base64: 'SGVsbG8gV29ybGQ=',
+				base64url: 'SGVsbG8gV29ybGQ'
+			};
+
+			const res = zDefault(schema, source);
+
+			expect(res).toEqual({
+				base64: 'SGVsbG8gV29ybGQ=',
+				base64url: 'SGVsbG8gV29ybGQ'
+			});
+		});
+
+		it('should handle CIDR types', () => {
+			const schema = z.object({
+				cidrv4: z.cidrv4(),
+				cidrv6: z.cidrv6()
+			});
+
+			const res = zDefault(schema);
+
+			expect(res).toEqual({
+				cidrv4: '',
+				cidrv6: ''
+			});
+		});
+
+		it('should handle CIDR types with source', () => {
+			const schema = z.object({
+				cidrv4: z.cidrv4(),
+				cidrv6: z.cidrv6()
+			});
+
+			const source = {
+				cidrv4: '192.168.1.0/24',
+				cidrv6: '2001:db8::/32'
+			};
+
+			const res = zDefault(schema, source);
+
+			expect(res).toEqual({
+				cidrv4: '192.168.1.0/24',
+				cidrv6: '2001:db8::/32'
+			});
+		});
+
+		it('should handle CUID types', () => {
+			const schema = z.object({
+				cuid: z.cuid(),
+				cuid2: z.cuid2()
+			});
+
+			const res = zDefault(schema);
+
+			expect(res).toEqual({
+				cuid: '',
+				cuid2: ''
+			});
+		});
+
+		it('should handle CUID types with source', () => {
+			const schema = z.object({
+				cuid: z.cuid(),
+				cuid2: z.cuid2()
+			});
+
+			const source = {
+				cuid: 'cjld2cjxh0000qzrmn831i7rn',
+				cuid2: 'tz4a98xxat96iws9zmbrgj3a'
+			};
+
+			const res = zDefault(schema, source);
+
+			expect(res).toEqual({
+				cuid: 'cjld2cjxh0000qzrmn831i7rn',
+				cuid2: 'tz4a98xxat96iws9zmbrgj3a'
+			});
+		});
+
+		it('should handle email and phone formats', () => {
+			const schema = z.object({
+				email: z.email(),
+				e164: z.e164()
+			});
+
+			const res = zDefault(schema);
+
+			expect(res).toEqual({
+				email: '',
+				e164: ''
+			});
+		});
+
+		it('should handle email and phone formats with source', () => {
+			const schema = z.object({
+				email: z.email(),
+				e164: z.e164()
+			});
+
+			const source = {
+				email: 'test@example.com',
+				e164: '+1234567890'
+			};
+
+			const res = zDefault(schema, source);
+
+			expect(res).toEqual({
+				email: 'test@example.com',
+				e164: '+1234567890'
+			});
+		});
+
+		it('should handle emoji format', () => {
+			const schema = z.object({
+				emoji: z.emoji()
+			});
+
+			const res = zDefault(schema);
+
+			expect(res).toEqual({
+				emoji: ''
+			});
+		});
+
+		it('should handle emoji format with source', () => {
+			const schema = z.object({
+				emoji: z.emoji()
+			});
+
+			const source = {
+				emoji: '🚀'
+			};
+
+			const res = zDefault(schema, source);
+
+			expect(res).toEqual({
+				emoji: '🚀'
+			});
+		});
+
+		it('should handle GUID and UUID types', () => {
+			const schema = z.object({
+				guid: z.guid(),
+				uuid: z.uuid(),
+				uuidv4: z.uuidv4(),
+				uuidv6: z.uuidv6(),
+				uuidv7: z.uuidv7()
+			});
+
+			const res = zDefault(schema);
+
+			expect(res).toEqual({
+				guid: '',
+				uuid: '',
+				uuidv4: '',
+				uuidv6: '',
+				uuidv7: ''
+			});
+		});
+
+		it('should handle GUID and UUID types with source', () => {
+			const schema = z.object({
+				guid: z.guid(),
+				uuid: z.uuid(),
+				uuidv4: z.uuidv4(),
+				uuidv6: z.uuidv6(),
+				uuidv7: z.uuidv7()
+			});
+
+			const source = {
+				guid: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+				uuid: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+				uuidv4: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+				uuidv6: '1e3a7b81-09da-6d11-80b4-00c04fd430c8',
+				uuidv7: '01234567-89ab-7def-8123-456789abcdef'
+			};
+
+			const res = zDefault(schema, source);
+
+			expect(res).toEqual({
+				guid: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+				uuid: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+				uuidv4: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+				uuidv6: '1e3a7b81-09da-6d11-80b4-00c04fd430c8',
+				uuidv7: '01234567-89ab-7def-8123-456789abcdef'
+			});
+		});
+
+		it('should handle IP address formats', () => {
+			const schema = z.object({
+				ipv4: z.ipv4(),
+				ipv6: z.ipv6()
+			});
+
+			const res = zDefault(schema);
+
+			expect(res).toEqual({
+				ipv4: '',
+				ipv6: ''
+			});
+		});
+
+		it('should handle IP address formats with source', () => {
+			const schema = z.object({
+				ipv4: z.ipv4(),
+				ipv6: z.ipv6()
+			});
+
+			const source = {
+				ipv4: '192.168.1.1',
+				ipv6: '2001:db8::1'
+			};
+
+			const res = zDefault(schema, source);
+
+			expect(res).toEqual({
+				ipv4: '192.168.1.1',
+				ipv6: '2001:db8::1'
+			});
+		});
+
+		it('should handle other string formats', () => {
+			const schema = z.object({
+				hostname: z.hostname(),
+				jwt: z.jwt(),
+				ksuid: z.ksuid(),
+				nanoid: z.nanoid(),
+				ulid: z.ulid(),
+				url: z.url(),
+				xid: z.xid()
+			});
+
+			const res = zDefault(schema);
+
+			expect(res).toEqual({
+				hostname: '',
+				jwt: '',
+				ksuid: '',
+				nanoid: '',
+				ulid: '',
+				url: '',
+				xid: ''
+			});
+		});
+
+		it('should handle other string formats with source', () => {
+			const schema = z.object({
+				hostname: z.hostname(),
+				jwt: z.jwt(),
+				ksuid: z.ksuid(),
+				nanoid: z.nanoid(),
+				ulid: z.ulid(),
+				url: z.url(),
+				xid: z.xid()
+			});
+
+			const source = {
+				hostname: 'example.com',
+				jwt: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
+				ksuid: '0ujtsYcgvSTl8PAuAdqWYSMnLOv',
+				nanoid: 'V1StGXR8_Z5jdHi6B-myT',
+				ulid: '01ARZ3NDEKTSV4RRFFQ69G5FAV',
+				url: 'https://example.com',
+				xid: '9m4e2mr0ui3e8a215n4g'
+			};
+
+			const res = zDefault(schema, source);
+
+			expect(res).toEqual({
+				hostname: 'example.com',
+				jwt: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
+				ksuid: '0ujtsYcgvSTl8PAuAdqWYSMnLOv',
+				nanoid: 'V1StGXR8_Z5jdHi6B-myT',
+				ulid: '01ARZ3NDEKTSV4RRFFQ69G5FAV',
+				url: 'https://example.com',
+				xid: '9m4e2mr0ui3e8a215n4g'
+			});
+		});
+	});
+
 	describe('symbol', () => {
 		it('should handle symbol', () => {
 			const schema = z.object({
@@ -606,6 +1534,82 @@ describe('v4', () => {
 		});
 	});
 
+	describe('tuple', () => {
+		it('should handle tuple without source', () => {
+			const schema = z.object({
+				pair: z.tuple([z.string(), z.number()])
+			});
+
+			const res = zDefault(schema);
+
+			expect(res).toEqual({
+				pair: []
+			});
+		});
+
+		it('should handle tuple with valid source', () => {
+			const schema = z.object({
+				pair: z.tuple([z.string(), z.number()])
+			});
+
+			const source = {
+				pair: ['hello', 42]
+			};
+
+			const res = zDefault(schema, source);
+
+			expect(res).toEqual({
+				pair: ['hello', 42]
+			});
+		});
+
+		it('should handle tuple with partial source', () => {
+			const schema = z.object({
+				pair: z.tuple([z.string(), z.number()])
+			});
+
+			const source = {
+				pair: ['hello']
+			};
+
+			const res = zDefault(schema, source);
+
+			expect(res).toEqual({
+				pair: ['hello']
+			});
+		});
+	});
+
+	describe('undefined', () => {
+		it('should handle undefined without source', () => {
+			const schema = z.object({
+				undefinedValue: z.undefined()
+			});
+
+			const res = zDefault(schema);
+
+			expect(res).toEqual({
+				undefinedValue: undefined
+			});
+		});
+
+		it('should handle undefined with source', () => {
+			const schema = z.object({
+				undefinedValue: z.undefined()
+			});
+
+			const source = {
+				undefinedValue: undefined
+			};
+
+			const res = zDefault(schema, source);
+
+			expect(res).toEqual({
+				undefinedValue: undefined
+			});
+		});
+	});
+
 	describe('union', () => {
 		it('should handle union', () => {
 			const schema = z.object({
@@ -614,6 +1618,70 @@ describe('v4', () => {
 			const res = zDefault(schema);
 
 			expect(res).toEqual({ union: '' });
+		});
+	});
+
+	describe('unknown with source', () => {
+		it('should handle unknown with valid source', () => {
+			const schema = z.object({
+				unknownValue: z.unknown()
+			});
+
+			const source = {
+				unknownValue: { complex: 'data', with: ['arrays', 'and', 'objects'] }
+			};
+
+			const res = zDefault(schema, source);
+
+			expect(res).toEqual({
+				unknownValue: { complex: 'data', with: ['arrays', 'and', 'objects'] }
+			});
+		});
+
+		it('should handle unknown with primitive source', () => {
+			const schema = z.object({
+				unknownValue: z.unknown()
+			});
+
+			const source = {
+				unknownValue: 'just a string'
+			};
+
+			const res = zDefault(schema, source);
+
+			expect(res).toEqual({
+				unknownValue: 'just a string'
+			});
+		});
+	});
+
+	describe('void', () => {
+		it('should handle void without source', () => {
+			const schema = z.object({
+				voidValue: z.void()
+			});
+
+			const res = zDefault(schema);
+
+			expect(res).toEqual({
+				voidValue: undefined
+			});
+		});
+
+		it('should handle void with source', () => {
+			const schema = z.object({
+				voidValue: z.void()
+			});
+
+			const source = {
+				voidValue: undefined
+			};
+
+			const res = zDefault(schema, source);
+
+			expect(res).toEqual({
+				voidValue: undefined
+			});
 		});
 	});
 
@@ -820,7 +1888,7 @@ describe('v4', () => {
 						forbidden: 'forbidden'
 					}
 				],
-				bigint: 10,
+				bigint: 10n,
 				boolean: true,
 				booleanUndefined: undefined,
 				date: new Date('2023-01-01'),
@@ -874,7 +1942,7 @@ describe('v4', () => {
 						b: ''
 					}
 				],
-				bigint: 10,
+				bigint: 10n,
 				boolean: true,
 				booleanUndefined: false,
 				date: new Date('2023-01-01'),

@@ -4,265 +4,6 @@ import { z } from 'zod/v4';
 import zDefault from './v4';
 
 describe('v4', () => {
-	describe('empty object', () => {
-		it('should handle empty object schema', () => {
-			const schema = z.object({});
-			const res = zDefault(schema);
-
-			expect(res).toEqual({});
-		});
-
-		it('should handle all types', () => {
-			const schema = z.object({
-				any: z.any(),
-				base64: z.base64(),
-				base64url: z.base64url(),
-				bigint: z.bigint(),
-				boolean: z.boolean(),
-				cidrv4: z.cidrv4(),
-				cidrv6: z.cidrv6(),
-				cuid: z.cuid(),
-				cuid2: z.cuid2(),
-				custom: z.custom(),
-				date: z.date(),
-				default: z.string().default('default'),
-				discriminatedUnion: z.discriminatedUnion('type', [
-					z.object({
-						type: z.literal('a'),
-						value: z.string()
-					}),
-					z.object({
-						type: z.literal('b'),
-						value: z.number()
-					})
-				]),
-				e164: z.e164(),
-				email: z.email(),
-				emoji: z.emoji(),
-				enum: z.enum(['A', 'B', 'C']),
-				file: z.file(),
-				float32: z.float32(),
-				float64: z.float64(),
-				guid: z.guid(),
-				hostname: z.hostname(),
-				instanceof: z.instanceof(Date),
-				int: z.int(),
-				int32: z.int32(),
-				int64: z.int64(),
-				intersection: z.intersection(z.string(), z.number()),
-				ipv4: z.ipv4(),
-				ipv6: z.ipv6(),
-				isoDate: z.iso.date(),
-				isoDateTime: z.iso.datetime(),
-				isoDuration: z.iso.duration(),
-				isoTime: z.iso.time(),
-				jwt: z.jwt(),
-				keyof: z.keyof(
-					z.object({
-						foo: z.string(),
-						bar: z.number()
-					})
-				),
-				ksuid: z.ksuid(),
-				literal: z.literal('literal'),
-				map: z.map(z.string(), z.string()),
-				nan: z.nan(),
-				nanoid: z.nanoid(),
-				never: z.never(),
-				null: z.null(),
-				nullable: z.string().nullable(),
-				number: z.number(),
-				object: z.object({
-					key: z.string()
-				}),
-				optional: z.string().optional(),
-				promise: z.promise(z.string()),
-				record: z.record(z.string(), z.string()),
-				set: z.set(z.string()),
-				string: z.string(),
-				stringbool: z.stringbool(),
-				symbol: z.symbol(),
-				tuple: z.tuple([z.string(), z.number()]),
-				uint32: z.uint32(),
-				uint64: z.uint64(),
-				ulid: z.ulid(),
-				undefined: z.undefined(),
-				union: z.union([z.string(), z.number()]),
-				unknown: z.unknown(),
-				url: z.url(),
-				uuid: z.uuid(),
-				uuidv4: z.uuidv4(),
-				uuidv6: z.uuidv6(),
-				uuidv7: z.uuidv7(),
-				void: z.void(),
-				xid: z.xid()
-			});
-
-			const res = zDefault(schema);
-
-			expect(res).toEqual({
-				any: undefined,
-				base64: '',
-				base64url: '',
-				bigint: 0n,
-				boolean: false,
-				cidrv4: '',
-				cidrv6: '',
-				cuid: '',
-				cuid2: '',
-				custom: undefined,
-				date: null,
-				default: 'default',
-				discriminatedUnion: {
-					type: 'a',
-					value: ''
-				},
-				e164: '',
-				email: '',
-				emoji: '',
-				enum: 'A',
-				file: undefined,
-				float32: 0,
-				float64: 0,
-				guid: '',
-				hostname: '',
-				instanceof: undefined,
-				int: 0,
-				int32: 0,
-				int64: 0n,
-				intersection: '',
-				ipv4: '',
-				ipv6: '',
-				isoDate: '',
-				isoDateTime: '',
-				isoDuration: '',
-				isoTime: '',
-				jwt: '',
-				keyof: 'foo',
-				ksuid: '',
-				literal: 'literal',
-				map: new Map(),
-				nan: NaN,
-				nanoid: '',
-				never: undefined,
-				null: null,
-				nullable: null,
-				number: 0,
-				object: {
-					key: ''
-				},
-				optional: '',
-				promise: Promise.resolve(''),
-				record: {},
-				set: new Set(),
-				string: '',
-				stringbool: false,
-				symbol: '',
-				tuple: [],
-				uint32: 0,
-				uint64: 0n,
-				ulid: '',
-				unknown: undefined,
-				undefined: undefined,
-				union: '',
-				url: '',
-				uuid: '',
-				uuidv4: '',
-				uuidv6: '',
-				uuidv7: '',
-				void: undefined,
-				xid: ''
-			});
-		});
-
-		it('should handle nested objects', () => {
-			const schema = z.object({
-				user: z.object({
-					name: z.string(),
-					age: z.number()
-				}),
-				settings: z.object({
-					isActive: z.boolean()
-				})
-			});
-
-			const res = zDefault(schema);
-
-			expect(res).toEqual({
-				user: { name: '', age: 0 },
-				settings: { isActive: false }
-			});
-		});
-
-		it('should handle optional fields', () => {
-			const schema = z.object({
-				required: z.string(),
-				optional: z.number().optional()
-			});
-
-			const res = zDefault(schema);
-
-			expect(res).toEqual({
-				required: '',
-				optional: 0
-			});
-		});
-
-		it('should handle default values', () => {
-			const emptyObject = {};
-			const schema = z.object({
-				age: z.number().default(30),
-				map: z.map(z.string(), z.string()).default(new Map([['key', 'value']])),
-				object: z.object({}).default(emptyObject),
-				name: z.string().default('John'),
-				set: z.set(z.string()).default(new Set(['value']))
-			});
-
-			const res = zDefault(schema);
-
-			expect(res.object).not.toBe(emptyObject);
-			expect(res).toEqual({
-				age: 30,
-				map: new Map([['key', 'value']]),
-				object: {},
-				name: 'John',
-				set: new Set(['value'])
-			});
-		});
-
-		it('should handle nullable types', () => {
-			const schema = z.object({
-				nullableString: z.string().nullable(),
-				nullableNumber: z.number().nullable()
-			});
-
-			const res = zDefault(schema);
-
-			expect(res).toEqual({
-				nullableString: null,
-				nullableNumber: null
-			});
-		});
-
-		it('should handle unknown types', () => {
-			const schema = z.object({
-				unknownNullableType: z.unknown().nullable(),
-				unknownOptionalType: z.unknown().optional(),
-				unknownType: z.unknown(),
-				unknwonWithDefault: z.unknown().default('default')
-			});
-
-			const res = zDefault(schema);
-
-			expect(res).toEqual({
-				unknownNullableType: null,
-				unknownOptionalType: undefined,
-				unknownType: undefined,
-				unknwonWithDefault: 'default'
-			});
-		});
-	});
-
 	describe('any', () => {
 		it('should handle any without source', () => {
 			const schema = z.object({
@@ -1685,6 +1426,293 @@ describe('v4', () => {
 		});
 	});
 
+	describe('no source', () => {
+		it('should handle empty object schema', () => {
+			const schema = z.object({});
+			const res = zDefault(schema);
+
+			expect(res).toEqual({});
+		});
+
+		it('should handle object schema with default', () => {
+			const schema = z
+				.object({
+					string: z.string(),
+					stringOptional: z.string().optional()
+				})
+				.default({
+					string: 'default'
+				});
+
+			const res = zDefault(schema);
+
+			expect(res).toEqual({
+				string: 'default'
+			});
+		});
+
+		it('should handle all types', () => {
+			const schema = z.object({
+				any: z.any(),
+				base64: z.base64(),
+				base64url: z.base64url(),
+				bigint: z.bigint(),
+				boolean: z.boolean(),
+				cidrv4: z.cidrv4(),
+				cidrv6: z.cidrv6(),
+				cuid: z.cuid(),
+				cuid2: z.cuid2(),
+				custom: z.custom(),
+				date: z.date(),
+				default: z.string().default('default'),
+				discriminatedUnion: z.discriminatedUnion('type', [
+					z.object({
+						type: z.literal('a'),
+						value: z.string()
+					}),
+					z.object({
+						type: z.literal('b'),
+						value: z.number()
+					})
+				]),
+				e164: z.e164(),
+				email: z.email(),
+				emoji: z.emoji(),
+				enum: z.enum(['A', 'B', 'C']),
+				file: z.file(),
+				float32: z.float32(),
+				float64: z.float64(),
+				guid: z.guid(),
+				hash: z.hash('md5'),
+				hostname: z.hostname(),
+				instanceof: z.instanceof(Date),
+				int: z.int(),
+				int32: z.int32(),
+				int64: z.int64(),
+				intersection: z.intersection(z.string(), z.number()),
+				ipv4: z.ipv4(),
+				ipv6: z.ipv6(),
+				isoDate: z.iso.date(),
+				isoDateTime: z.iso.datetime(),
+				isoDuration: z.iso.duration(),
+				isoTime: z.iso.time(),
+				jwt: z.jwt(),
+				keyof: z.keyof(
+					z.object({
+						foo: z.string(),
+						bar: z.number()
+					})
+				),
+				ksuid: z.ksuid(),
+				literal: z.literal('literal'),
+				map: z.map(z.string(), z.string()),
+				nan: z.nan(),
+				nanoid: z.nanoid(),
+				never: z.never(),
+				null: z.null(),
+				nullable: z.string().nullable(),
+				number: z.number(),
+				object: z.object({
+					key: z.string()
+				}),
+				optional: z.string().optional(),
+				promise: z.promise(z.string()),
+				record: z.record(z.string(), z.string()),
+				set: z.set(z.string()),
+				string: z.string(),
+				stringbool: z.stringbool(),
+				symbol: z.symbol(),
+				tuple: z.tuple([z.string(), z.number()]),
+				uint32: z.uint32(),
+				uint64: z.uint64(),
+				ulid: z.ulid(),
+				undefined: z.undefined(),
+				union: z.union([z.string(), z.number()]),
+				unknown: z.unknown(),
+				url: z.url(),
+				uuid: z.uuid(),
+				uuidv4: z.uuidv4(),
+				uuidv6: z.uuidv6(),
+				uuidv7: z.uuidv7(),
+				void: z.void(),
+				xid: z.xid()
+			});
+
+			const res = zDefault(schema);
+
+			expect(res).toEqual({
+				any: undefined,
+				base64: '',
+				base64url: '',
+				bigint: 0n,
+				boolean: false,
+				cidrv4: '',
+				cidrv6: '',
+				cuid: '',
+				cuid2: '',
+				custom: undefined,
+				date: null,
+				default: 'default',
+				discriminatedUnion: {
+					type: 'a',
+					value: ''
+				},
+				e164: '',
+				email: '',
+				emoji: '',
+				enum: 'A',
+				file: undefined,
+				float32: 0,
+				float64: 0,
+				guid: '',
+				hash: '',
+				hostname: '',
+				instanceof: undefined,
+				int: 0,
+				int32: 0,
+				int64: 0n,
+				intersection: '',
+				ipv4: '',
+				ipv6: '',
+				isoDate: '',
+				isoDateTime: '',
+				isoDuration: '',
+				isoTime: '',
+				jwt: '',
+				keyof: 'foo',
+				ksuid: '',
+				literal: 'literal',
+				map: new Map(),
+				nan: NaN,
+				nanoid: '',
+				never: undefined,
+				null: null,
+				nullable: null,
+				number: 0,
+				object: {
+					key: ''
+				},
+				optional: undefined,
+				promise: Promise.resolve(''),
+				record: {},
+				set: new Set(),
+				string: '',
+				stringbool: false,
+				symbol: '',
+				tuple: [],
+				uint32: 0,
+				uint64: 0n,
+				ulid: '',
+				unknown: undefined,
+				undefined: undefined,
+				union: '',
+				url: '',
+				uuid: '',
+				uuidv4: '',
+				uuidv6: '',
+				uuidv7: '',
+				void: undefined,
+				xid: ''
+			});
+		});
+
+		it('should handle nested objects', () => {
+			const schema = z.object({
+				settings: z.object({
+					isActive: z.boolean()
+				}),
+				user: z.object({
+					name: z.string(),
+					age: z.number()
+				})
+			});
+
+			const res = zDefault(schema);
+
+			expect(res).toEqual({
+				settings: { isActive: false },
+				user: { name: '', age: 0 }
+			});
+		});
+
+		it('should handle optional fields', () => {
+			const schema = z.object({
+				number: z.number().optional(),
+				numberWithDefault: z.number().optional().default(10),
+				string: z.string().optional(),
+				stringWithDefault: z.string().optional().default('default')
+			});
+
+			const res = zDefault(schema);
+
+			expect(res).toEqual({
+				numberWithDefault: 10,
+				stringWithDefault: 'default'
+			});
+		});
+
+		it('should handle default values', () => {
+			const schema = z.object({
+				age: z.number().default(30),
+				map: z.map(z.string(), z.string()).default(new Map([['key', 'value']])),
+				object: z
+					.object({
+						string: z.string(),
+						stringOptional: z.string().optional()
+					})
+					.default({
+						string: 'default'
+					}),
+				name: z.string().default('John'),
+				set: z.set(z.string()).default(new Set(['value']))
+			});
+
+			const res = zDefault(schema);
+
+			expect(res).toEqual({
+				age: 30,
+				map: new Map([['key', 'value']]),
+				object: {
+					string: 'default'
+				},
+				name: 'John',
+				set: new Set(['value'])
+			});
+		});
+
+		it('should handle nullable types', () => {
+			const schema = z.object({
+				nullableString: z.string().nullable(),
+				nullableNumber: z.number().nullable()
+			});
+
+			const res = zDefault(schema);
+
+			expect(res).toEqual({
+				nullableString: null,
+				nullableNumber: null
+			});
+		});
+
+		it('should handle unknown types', () => {
+			const schema = z.object({
+				unknownNullableType: z.unknown().nullable(),
+				unknownOptionalType: z.unknown().optional(),
+				unknownType: z.unknown(),
+				unknwonWithDefault: z.unknown().default('default')
+			});
+
+			const res = zDefault(schema);
+
+			expect(res).toEqual({
+				unknownNullableType: null,
+				unknownOptionalType: undefined,
+				unknownType: undefined,
+				unknwonWithDefault: 'default'
+			});
+		});
+	});
+
 	describe('with source', () => {
 		it('should merge arrays', () => {
 			const schema = z.object({
@@ -1868,6 +1896,7 @@ describe('v4', () => {
 				float32: z.float32(),
 				float64: z.float64(),
 				guid: z.guid(),
+				hash: z.hash('md5'),
 				hostname: z.hostname(),
 				instanceof: z.instanceof(Date),
 				int: z.int(),
@@ -1964,6 +1993,7 @@ describe('v4', () => {
 				float64: 3.141592653589793,
 				forbidden: 'forbidden',
 				guid: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+				hash: '1234567890',
 				hostname: 'example.com',
 				instanceof: new Date('2023-01-01'),
 				int: 42,
@@ -2057,6 +2087,7 @@ describe('v4', () => {
 				float32: 3.14159,
 				float64: 3.141592653589793,
 				guid: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+				hash: '1234567890',
 				hostname: 'example.com',
 				instanceof: new Date('2023-01-01'),
 				int: 42,

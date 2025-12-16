@@ -259,9 +259,17 @@ const defaultInstance = <T extends z.ZodSchema>(
 		// Process defined schema properties
 		for (const [key, fieldSchema] of Object.entries(shape)) {
 			if (key in source) {
-				result[key] = processValue(fieldSchema as z.ZodTypeAny, source[key]);
+				const v = processValue(fieldSchema as z.ZodTypeAny, source[key]);
+
+				if (v !== undefined) {
+					result[key] = v;
+				}
 			} else {
-				result[key] = getDefaultValue(fieldSchema as z.ZodTypeAny);
+				const v = getDefaultValue(fieldSchema as z.ZodTypeAny);
+
+				if (v !== undefined) {
+					result[key] = v;
+				}
 			}
 		}
 

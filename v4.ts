@@ -357,9 +357,17 @@ const defaultInstance = <T extends z.ZodType>(schema: T, source?: DeepPartial<z.
 			const zodFieldSchema = cast(fieldSchema);
 
 			if (source && key in source) {
-				result[key] = processValue(zodFieldSchema, source[key]);
+				const v = processValue(zodFieldSchema, source[key]);
+
+				if (v !== undefined) {
+					result[key] = v;
+				}
 			} else {
-				result[key] = getDefaultValue(zodFieldSchema);
+				const v = getDefaultValue(zodFieldSchema);
+
+				if (v !== undefined) {
+					result[key] = v;
+				}
 			}
 		}
 

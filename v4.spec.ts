@@ -1788,6 +1788,42 @@ describe('v4', () => {
 
 		it('should handle deeply nested objects', () => {
 			const schema = z.object({
+				arrayObject: z.array(
+					z.object({
+						prop1: z.string(),
+						prop2: z.number().default(20),
+						prop3: z.object({
+							prop31: z.string().default('prop31'),
+							prop32: z.number()
+						}),
+						prop4: z
+							.object({
+								prop41: z.string().default('prop41'),
+								prop42: z.number()
+							})
+							.optional()
+					})
+				),
+				nestedObject: z.object({
+					prop1: z.object({
+						prop11: z.string(),
+						prop12: z.number()
+					}),
+					prop2: z.object({
+						prop21: z.enum(['value1', 'value2']),
+						prop22: z.boolean()
+					}),
+					prop3: z.object({
+						prop31: z.enum(['value3', 'value4']),
+						prop32: z.boolean()
+					}),
+					prop4: z
+						.object({
+							prop41: z.enum(['value5', 'value6']),
+							prop42: z.boolean()
+						})
+						.optional()
+				}),
 				objectWithDefault: z
 					.object({
 						prop1: z.string(),
@@ -1797,60 +1833,76 @@ describe('v4', () => {
 						prop1: 'default',
 						prop2: 20
 					}),
-				posts: z.array(
-					z.object({
-						content: z.string(),
-						tags: z.array(z.string()),
-						title: z.string(),
-						subtitle: z.string().default('subtitle')
+				optionalObject: z
+					.object({
+						prop1: z.string(),
+						prop2: z.number()
 					})
-				),
-				user: z.object({
-					personal: z.object({
-						name: z.string(),
-						age: z.number()
-					}),
-					settings: z.object({
-						theme: z.enum(['light', 'dark']),
-						notifications: z.boolean()
-					})
-				})
+					.optional()
 			});
 
 			const source = {
+				arrayObject: [
+					{
+						prop1: 'prop1',
+						prop4: {}
+					}
+				],
+				nestedObject: {
+					prop1: { prop11: 'prop11' },
+					prop2: { prop21: 'value1' as const },
+					prop4: {}
+				},
 				objectWithDefault: {
 					prop1: 'default2'
 				},
-				posts: [
-					{
-						title: 'Hello',
-						tags: ['greeting']
-					}
-				],
-				user: {
-					personal: { name: 'John' },
-					settings: { theme: 'dark' as const }
+				optionalObject: {
+					prop1: 'prop1'
 				}
 			};
 
 			const res = zDefault(schema, source);
 
 			expect(res).toEqual({
+				arrayObject: [
+					{
+						prop1: 'prop1',
+						prop2: 20,
+						prop3: {
+							prop31: 'prop31',
+							prop32: 0
+						},
+						prop4: {
+							prop41: 'prop41',
+							prop42: 0
+						}
+					}
+				],
+				nestedObject: {
+					prop1: {
+						prop11: 'prop11',
+						prop12: 0
+					},
+					prop2: {
+						prop21: 'value1',
+						prop22: false
+					},
+					prop3: {
+						prop31: 'value3',
+						prop32: false
+					},
+					prop4: {
+						prop41: 'value5',
+						prop42: false
+					}
+				},
 				objectWithDefault: {
 					prop1: 'default2',
 					prop2: 0
 				},
-				posts: [
-					{
-						content: '',
-						tags: ['greeting'],
-						title: 'Hello',
-						subtitle: 'subtitle'
-					}
-				],
-				user: {
-					personal: { name: 'John', age: 0 },
-					settings: { theme: 'dark', notifications: false }
+				optionalObject: {
+					prop1: 'prop1',
+					prop2: 0
 				}
 			});
 		});

@@ -301,6 +301,10 @@ const defaultInstance = <T extends z.ZodType>(schema: T, source?: DeepPartial<z.
 			return processObject(schema, value);
 		}
 
+		if (schema instanceof z.ZodOptional) {
+			return isNil(value) ? undefined : processValue(schema._zod.def.innerType as any, value);
+		}
+
 		if (schema instanceof z.ZodPipe) {
 			if (schema._zod.def.out instanceof z.ZodTransform) {
 				return processTransform(schema._zod.def.out, value);

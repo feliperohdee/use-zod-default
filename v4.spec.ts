@@ -2409,5 +2409,24 @@ describe('v4', () => {
 				data: ''
 			});
 		});
+
+		it('should preserve explicit null on fields with defaults', () => {
+			const schema = z.object({
+				name: z.string().nullable().default('John'),
+				operator: z.enum(['EQUALS', 'IS-TRUE']).nullable().default('EQUALS')
+			});
+
+			const source = {
+				name: null,
+				operator: null
+			};
+
+			const res = zDefault(schema, source);
+
+			expect(res).toEqual({
+				name: null,
+				operator: null
+			});
+		});
 	});
 });

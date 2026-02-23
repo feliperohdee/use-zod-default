@@ -1,10 +1,11 @@
 import { z } from 'zod/v4';
 import cloneDeep from 'lodash/cloneDeep';
 import isBoolean from 'lodash/isBoolean';
-import isNumber from 'lodash/isNumber';
 import isNil from 'lodash/isNil';
+import isNumber from 'lodash/isNumber';
 import isPlainObject from 'lodash/isPlainObject';
 import isString from 'lodash/isString';
+import isUndefined from 'lodash/isUndefined';
 
 type DeepPartial<T> = T extends (infer U)[] ? DeepPartial<U>[] : T extends object ? { [P in keyof T]?: DeepPartial<T[P]> } : T;
 
@@ -266,7 +267,7 @@ const defaultInstance = <T extends z.ZodType>(schema: T, source?: DeepPartial<z.
 		}
 
 		if (schema instanceof z.ZodDefault) {
-			return processValue(cast(schema._zod.def.innerType), !isNil(value) ? value : getDefaultValue(schema));
+			return processValue(cast(schema._zod.def.innerType), !isUndefined(value) ? value : getDefaultValue(schema));
 		}
 
 		if (schema instanceof z.ZodISODate) {

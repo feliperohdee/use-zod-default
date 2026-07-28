@@ -270,6 +270,10 @@ const defaultInstance = <T extends z.ZodType>(schema: T, source?: DeepPartial<z.
 			return processValue(cast(schema._zod.def.innerType), !isUndefined(value) ? value : getDefaultValue(schema));
 		}
 
+		if (schema instanceof z.ZodEnum) {
+			return schema._zod.values.has(value) ? value : getDefaultValue(schema);
+		}
+
 		if (schema instanceof z.ZodISODate) {
 			return isString(value) ? value : new Date().toISOString().split('T')[0];
 		}
@@ -284,6 +288,10 @@ const defaultInstance = <T extends z.ZodType>(schema: T, source?: DeepPartial<z.
 
 		if (schema instanceof z.ZodISOTime) {
 			return isString(value) ? value : new Date().toISOString().split('T')[1];
+		}
+
+		if (schema instanceof z.ZodLiteral) {
+			return schema._zod.values.has(value) ? value : getDefaultValue(schema);
 		}
 
 		if (schema instanceof z.ZodMap) {

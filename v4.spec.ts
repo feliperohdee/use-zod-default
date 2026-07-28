@@ -184,6 +184,116 @@ describe('v4', () => {
 				size: 'small'
 			});
 		});
+
+		it('should handle enum with valid source', () => {
+			const schema = z.object({
+				color: z.enum(['red', 'green', 'blue'])
+			});
+
+			const source = {
+				color: 'green' as const
+			};
+
+			const res = zDefault(schema, source);
+
+			expect(res).toEqual({
+				color: 'green'
+			});
+		});
+
+		it('should handle enum with source out of the enum', () => {
+			const schema = z.object({
+				color: z.enum(['red', 'green', 'blue'])
+			});
+
+			const source = {
+				color: 'purple'
+			};
+
+			// @ts-expect-error
+			const res = zDefault(schema, source);
+
+			expect(res).toEqual({
+				color: 'red'
+			});
+		});
+
+		it('should handle enum with source of another type', () => {
+			const schema = z.object({
+				color: z.enum(['red', 'green', 'blue'])
+			});
+
+			const source = {
+				color: 42
+			};
+
+			// @ts-expect-error
+			const res = zDefault(schema, source);
+
+			expect(res).toEqual({
+				color: 'red'
+			});
+		});
+
+		it('should handle numeric enum with source out of the enum', () => {
+			const schema = z.object({
+				level: z.enum({ high: 2, low: 0, medium: 1 })
+			});
+
+			const source = {
+				level: 9
+			};
+
+			// @ts-expect-error
+			const res = zDefault(schema, source);
+
+			expect(res).toEqual({
+				level: 2
+			});
+		});
+
+		it('should handle defaulted enum with source out of the enum', () => {
+			const schema = z.object({
+				color: z.enum(['red', 'green', 'blue']).default('blue')
+			});
+
+			const source = {
+				color: 'purple'
+			};
+
+			// @ts-expect-error
+			const res = zDefault(schema, source);
+
+			expect(res).toEqual({
+				color: 'red'
+			});
+		});
+
+		it('should handle nested enum with source out of the enum', () => {
+			const schema = z.object({
+				items: z.array(z.enum(['red', 'green', 'blue'])),
+				nested: z.object({
+					color: z.enum(['red', 'green', 'blue'])
+				})
+			});
+
+			const source = {
+				items: ['green', 'purple'],
+				nested: {
+					color: 'purple'
+				}
+			};
+
+			// @ts-expect-error
+			const res = zDefault(schema, source);
+
+			expect(res).toEqual({
+				items: ['green', 'red'],
+				nested: {
+					color: 'red'
+				}
+			});
+		});
 	});
 
 	describe('file', () => {
@@ -484,6 +594,82 @@ describe('v4', () => {
 			const res = zDefault(schema);
 
 			expect(res).toEqual({ literal: 'value' });
+		});
+
+		it('should handle literal with valid source', () => {
+			const schema = z.object({
+				literal: z.literal('value')
+			});
+
+			const source = {
+				literal: 'value' as const
+			};
+
+			const res = zDefault(schema, source);
+
+			expect(res).toEqual({ literal: 'value' });
+		});
+
+		it('should handle literal with source out of the literal', () => {
+			const schema = z.object({
+				literal: z.literal('value')
+			});
+
+			const source = {
+				literal: 'other'
+			};
+
+			// @ts-expect-error
+			const res = zDefault(schema, source);
+
+			expect(res).toEqual({ literal: 'value' });
+		});
+
+		it('should handle multi literal with source out of the literal', () => {
+			const schema = z.object({
+				literal: z.literal(['value', 'otherValue'])
+			});
+
+			const source = {
+				literal: 'otherValue' as const
+			};
+
+			const outOfSetSource = {
+				literal: 'unknownValue'
+			};
+
+			const res = zDefault(schema, source);
+			// @ts-expect-error
+			const outOfSetRes = zDefault(schema, outOfSetSource);
+
+			expect(res).toEqual({ literal: 'otherValue' });
+			expect(outOfSetRes).toEqual({ literal: 'value' });
+		});
+
+		it('should handle nested literal with source out of the literal', () => {
+			const schema = z.object({
+				items: z.array(z.literal('value')),
+				nested: z.object({
+					literal: z.literal('value')
+				})
+			});
+
+			const source = {
+				items: ['value', 'other'],
+				nested: {
+					literal: 'other'
+				}
+			};
+
+			// @ts-expect-error
+			const res = zDefault(schema, source);
+
+			expect(res).toEqual({
+				items: ['value', 'value'],
+				nested: {
+					literal: 'value'
+				}
+			});
 		});
 	});
 
@@ -2258,9 +2444,11 @@ describe('v4', () => {
 				}
 			});
 
+			// an unmatched discriminator falls back to the first option, so the
+			// discriminator itself is clamped to that option's literal
 			expect(invalidRes).toEqual({
 				res: {
-					status: 'invalid',
+					status: 'success',
 					data: ''
 				}
 			});

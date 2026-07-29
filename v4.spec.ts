@@ -252,7 +252,7 @@ describe('v4', () => {
 			});
 		});
 
-		it('should handle defaulted enum with source out of the enum', () => {
+		it('should degrade a defaulted enum with source out of the enum to the DECLARED default', () => {
 			const schema = z.object({
 				color: z.enum(['red', 'green', 'blue']).default('blue')
 			});
@@ -265,7 +265,45 @@ describe('v4', () => {
 			const res = zDefault(schema, source);
 
 			expect(res).toEqual({
-				color: 'red'
+				color: 'blue'
+			});
+		});
+
+		it('should converge absent and corrupted defaulted-enum keys on the same value', () => {
+			const schema = z.object({
+				kind: z.enum(['feed', 'page']).default('page')
+			});
+
+			// @ts-expect-error
+			const corrupted = zDefault(schema, { kind: 'nonsense' });
+			const absent = zDefault(schema, {});
+
+			expect(corrupted).toEqual({ kind: 'page' });
+			expect(absent).toEqual({ kind: 'page' });
+		});
+
+		it('should keep a valid value on a defaulted enum', () => {
+			const schema = z.object({
+				color: z.enum(['red', 'green', 'blue']).default('blue')
+			});
+
+			const res = zDefault(schema, { color: 'green' });
+
+			expect(res).toEqual({
+				color: 'green'
+			});
+		});
+
+		it('should degrade a defaulted literal with a corrupted value to the declared default', () => {
+			const schema = z.object({
+				mode: z.literal('single').default('single')
+			});
+
+			// @ts-expect-error
+			const res = zDefault(schema, { mode: 'multi' });
+
+			expect(res).toEqual({
+				mode: 'single'
 			});
 		});
 

@@ -267,7 +267,22 @@ const defaultInstance = <T extends z.ZodType>(schema: T, source?: DeepPartial<z.
 		}
 
 		if (schema instanceof z.ZodDefault) {
-			return processValue(cast(schema._zod.def.innerType), !isUndefined(value) ? value : getDefaultValue(schema));
+			const inner = cast(schema._zod.def.innerType);
+
+			if (isUndefined(value)) {
+				return processValue(inner, getDefaultValue(schema));
+			}
+
+			// A present-but-invalid enum/literal value degrades to the DECLARED
+			// default — the schema author's chosen value — never the inner
+			// type's first member (which stays the fallback only when no
+			// .default() exists). This keeps "key absent" and "value corrupted"
+			// converging on the same repaired value.
+			if ((inner instanceof z.ZodEnum || inner instanceof z.ZodLiteral) && !inner._zod.values.has(value)) {
+				return getDefaultValue(schema);
+			}
+
+			return processValue(inner, value);
 		}
 
 		if (schema instanceof z.ZodEnum) {
